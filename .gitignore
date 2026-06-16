@@ -1,0 +1,49 @@
+# =========================
+# Dependencias
+# =========================
+
+node_modules/
+/Backend/node_modules/
+/Frontend/node_modules/
+
+# =========================
+# Archivos de Entorno
+# =========================
+# Claves, puertos, URIs de bases de datos
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =========================
+# Compilados y Builds
+# =========================
+# El código TypeScript compilado del servidor
+/Backend/dist/
+/Backend/build/
+
+# El empaquetado de Vite/React para producción
+/Frontend/dist/
+/Frontend/dist-ssr/
+
+# =========================
+# Logs
+# =========================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# Sistema Operativo y Editores
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
