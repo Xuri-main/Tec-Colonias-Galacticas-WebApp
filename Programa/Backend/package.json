@@ -1,15 +1,23 @@
 {
-  "name": "backend",
+  "name": "colonias-galacticas-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "description": "Backend del proyecto Colonias Galacticas",
+  "main": "dist/servidor.js",
   "type": "commonjs",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/servidor.ts",
+    "build": "tsc",
+    "start": "node dist/servidor.js",
+    "check": "tsc --noEmit"
+  },
+  "keywords": [
+    "express",
+    "socket.io",
+    "typescript",
+    "colonias-galacticas"
+  ],
+  "author": "Emilio Funes R., Ginger Rodriguez G. & Jareck Levell C.",
+  "license": "ISC",
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
