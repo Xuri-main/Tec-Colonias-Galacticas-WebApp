@@ -59,7 +59,7 @@ export class ControladorPartidas {
     */
     public obtenerPorId(req: Request, res: Response): void {
         try {
-            const partida = this.servicioPartidas.obtenerPartida(req.params.id);
+            const partida = this.servicioPartidas.obtenerPartida((req.params.id as string));
             res.json({ ok: true, partida: partida.obtenerEstadoPublico() });
         } catch (error: any) {
             res.status(404).json({ ok: false, mensaje: error.message });
@@ -75,7 +75,7 @@ export class ControladorPartidas {
     public unirse(req: Request, res: Response): void {
         try {
             const { idSocket, nickname } = req.body;
-            const partida = this.servicioPartidas.unirJugador(req.params.id, idSocket || 'sin-socket', nickname);
+            const partida = this.servicioPartidas.unirJugador((req.params.id as string), idSocket || 'sin-socket', nickname);
             res.json({ ok: true, partida });
         } catch (error: any) {
             res.status(400).json({ ok: false, mensaje: error.message });
@@ -90,7 +90,7 @@ export class ControladorPartidas {
     */
     public iniciar(req: Request, res: Response): void {
         try {
-            const partida = this.servicioPartidas.iniciarPartida(req.params.id);
+            const partida = this.servicioPartidas.iniciarPartida((req.params.id as string));
             res.json({ ok: true, partida });
         } catch (error: any) {
             res.status(400).json({ ok: false, mensaje: error.message });
@@ -106,7 +106,7 @@ export class ControladorPartidas {
     public construir(req: Request, res: Response): void {
         try {
             const { jugadorId, sistemaId, tipoConstruccion } = req.body;
-            const partida = this.servicioPartidas.construir(req.params.id, jugadorId, sistemaId, tipoConstruccion);
+            const partida = this.servicioPartidas.construir((req.params.id as string), jugadorId, sistemaId, tipoConstruccion);
             res.json({ ok: true, partida });
         } catch (error: any) {
             res.status(400).json({ ok: false, mensaje: error.message });
@@ -122,7 +122,7 @@ export class ControladorPartidas {
     public moverFlotas(req: Request, res: Response): void {
         try {
             const { jugadorId, origenId, destinoId, cantidad } = req.body;
-            const partida = this.servicioPartidas.moverFlotas(req.params.id, jugadorId, origenId, destinoId, Number(cantidad));
+            const partida = this.servicioPartidas.moverFlotas((req.params.id as string), jugadorId, origenId, destinoId, Number(cantidad));
             res.json({ ok: true, partida });
         } catch (error: any) {
             res.status(400).json({ ok: false, mensaje: error.message });

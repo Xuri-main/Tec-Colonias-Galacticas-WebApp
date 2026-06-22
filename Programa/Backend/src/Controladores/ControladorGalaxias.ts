@@ -44,7 +44,7 @@ export class ControladorGalaxias {
     */
     public obtenerPorId(req: Request, res: Response): void {
         try {
-            const galaxia = this.servicioGalaxias.obtenerGalaxiaPorId(req.params.id);
+            const galaxia = this.servicioGalaxias.obtenerGalaxiaPorId((req.params.id as string));
             res.json({ ok: true, galaxia: galaxia.toJSON() });
         } catch (error: any) {
             res.status(404).json({ ok: false, mensaje: error.message });
