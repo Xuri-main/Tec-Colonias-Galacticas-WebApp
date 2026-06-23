@@ -15,9 +15,26 @@ export interface Recursos {
   cristales: number;
 }
 
+export interface SistemaResumen {
+  id: string;
+  nombre: string;
+  tipo?: string;
+  descripcion?: string;
+}
+
+export interface RutaResumen {
+  origenId?: string;
+  destinoId?: string;
+  origen?: string;
+  destino?: string;
+  distancia?: number;
+}
+
 export interface GalaxiaResumen {
   id: string;
   nombre: string;
+  sistemas?: SistemaResumen[];
+  rutas?: RutaResumen[];
   cantidadSistemas?: number;
   cantidadRutas?: number;
 }
