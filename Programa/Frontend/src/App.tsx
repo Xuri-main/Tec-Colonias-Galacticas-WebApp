@@ -13,6 +13,7 @@ import { MenuPrincipal } from './paginas/MenuPrincipal';
 import { CrearPartida } from './paginas/CrearPartida';
 import { UnirsePartida } from './paginas/UnirsePartida';
 import { SalaEspera } from './paginas/SalaEspera';
+import { Juego } from './paginas/Juego';
 import { Ranking } from './paginas/Ranking';
 import { VistaAplicacion } from './tipos/tiposJuego';
 
@@ -54,6 +55,16 @@ export default function App() {
     setVistaActual('sala-espera');
   };
 
+  /*
+       abrirJuego
+      Entradas: No recibe entradas.
+      Salidas: No retorna valor.
+      Objetivo: Cambiar a la vista principal del juego usando la partida activa.
+  */
+  const abrirJuego = () => {
+    setVistaActual('juego');
+  };
+
   return (
     <div className="aplicacion">
       <FondoGalactico />
@@ -91,6 +102,17 @@ export default function App() {
               idJugadorActual={idJugadorActual}
               volverAlMenu={volverAlMenu}
               guardarJugadorActual={setIdJugadorActual}
+              abrirJuego={abrirJuego}
+            />
+          )}
+
+          {vistaActual === 'juego' && (
+            <Juego
+              nickname={nickname}
+              idPartida={idPartidaActiva}
+              idJugadorActual={idJugadorActual}
+              volverSalaEspera={() => setVistaActual('sala-espera')}
+              volverAlMenu={volverAlMenu}
             />
           )}
 

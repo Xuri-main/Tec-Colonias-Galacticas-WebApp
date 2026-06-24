@@ -16,6 +16,7 @@ interface PropiedadesSalaEspera {
   idJugadorActual: string;
   volverAlMenu: () => void;
   guardarJugadorActual: (idJugador: string) => void;
+  abrirJuego: () => void;
 }
 
 /*
@@ -76,7 +77,7 @@ function calcularPorcentajeCupos(partida: PartidaDetalle | null): number {
     Salidas: Interfaz de sala de espera.
     Objetivo: Consultar la partida, mostrar jugadores y permitir iniciar cuando la sala este completa.
 */
-export function SalaEspera({ nickname, idPartida, idJugadorActual, volverAlMenu, guardarJugadorActual }: PropiedadesSalaEspera) {
+export function SalaEspera({ nickname, idPartida, idJugadorActual, volverAlMenu, guardarJugadorActual, abrirJuego }: PropiedadesSalaEspera) {
   const [partida, setPartida] = useState<PartidaDetalle | null>(null);
   const [mensaje, setMensaje] = useState('');
   const [cargando, setCargando] = useState(false);
@@ -191,7 +192,7 @@ export function SalaEspera({ nickname, idPartida, idJugadorActual, volverAlMenu,
       setMensaje('Enviando orden de inicio al servidor...');
       const datos = await iniciarPartida(idPartida);
       setPartida(datos);
-      setMensaje('Partida iniciada. El siguiente bloque del desarrollo conectara esta sala con la vista de juego.');
+      setMensaje('Partida iniciada. Ya puede entrar a la vista tactica del juego.');
     } catch (error: any) {
       setMensaje(error.message || 'No se pudo iniciar la partida.');
     } finally {
@@ -344,8 +345,12 @@ export function SalaEspera({ nickname, idPartida, idJugadorActual, volverAlMenu,
               <Rocket size={21} />
               <strong>La partida ya esta iniciada</strong>
               <p>
-                En el siguiente paso se desarrollara la vista del juego, el mapa galactico y la tecla U con cuenta regresiva.
+                Puede entrar a la vista tactica para revisar el mapa, sistemas, recursos, flotas e infraestructura.
               </p>
+              <button type="button" onClick={abrirJuego}>
+                <Rocket size={15} />
+                Entrar al campo galactico
+              </button>
             </div>
           )}
 

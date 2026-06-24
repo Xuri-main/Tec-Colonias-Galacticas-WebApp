@@ -1963,3 +1963,535 @@ button:focus {
     grid-column: 2;
   }
 }
+
+/* Vista principal del juego */
+.vista-juego {
+  width: 100%;
+  max-width: 1520px;
+  margin: 0 auto;
+  padding: 22px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cabecera-juego {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.cabecera-juego h2 {
+  margin: 8px 0 6px;
+  color: var(--texto-principal);
+  font-family: var(--fuente-titulo);
+  font-size: clamp(1.8rem, 3vw, 3.2rem);
+  line-height: 1;
+  text-transform: uppercase;
+  text-shadow: 0 0 34px rgba(0, 229, 255, 0.2);
+}
+
+.cabecera-juego p {
+  margin: 0;
+  max-width: 760px;
+  color: var(--texto-secundario);
+  line-height: 1.5;
+}
+
+.cabecera-juego strong {
+  color: var(--cyan);
+}
+
+.acciones-cabecera-juego {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.acciones-cabecera-juego button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  border-radius: 4px;
+  background: rgba(13, 21, 48, 0.8);
+  color: var(--texto-principal);
+  font-family: var(--fuente-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.acciones-cabecera-juego button:hover:not(:disabled) {
+  border-color: rgba(0, 229, 255, 0.45);
+  box-shadow: 0 0 22px rgba(0, 229, 255, 0.1);
+}
+
+.acciones-cabecera-juego button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.mensaje-juego {
+  padding: 10px 14px;
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 4px;
+  background: rgba(0, 229, 255, 0.04);
+  color: var(--texto-secundario);
+  font-family: var(--fuente-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+
+.tablero-juego {
+  min-height: 560px;
+  display: grid;
+  grid-template-columns: 270px minmax(520px, 1fr) 310px;
+  gap: 14px;
+}
+
+.panel-juego,
+.panel-mapa-juego,
+.panel-acciones-juego,
+.panel-eventos-juego {
+  border: 1px solid rgba(0, 229, 255, 0.13);
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(13, 21, 48, 0.92), rgba(10, 15, 31, 0.95));
+  box-shadow: var(--sombra-cyan);
+  backdrop-filter: blur(10px);
+}
+
+.panel-juego {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.titulo-panel-juego {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--cyan);
+  font-family: var(--fuente-titulo);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.titulo-panel-juego div {
+  flex: 1;
+  height: 1px;
+  background: rgba(0, 229, 255, 0.12);
+}
+
+.tarjeta-comandante-juego,
+.tarjeta-sistema-juego,
+.aviso-tecla-u {
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  border-radius: 4px;
+  background: rgba(0, 229, 255, 0.04);
+  padding: 12px;
+}
+
+.tarjeta-comandante-juego strong,
+.tarjeta-sistema-juego strong {
+  display: block;
+  color: var(--texto-principal);
+  font-family: var(--fuente-titulo);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+}
+
+.tarjeta-comandante-juego span,
+.tarjeta-sistema-juego span,
+.tarjeta-sistema-juego p {
+  display: block;
+  margin-top: 5px;
+  color: var(--texto-secundario);
+  font-family: var(--fuente-mono);
+  font-size: 0.68rem;
+  line-height: 1.5;
+}
+
+.tarjeta-sistema-juego p {
+  font-family: var(--fuente-ui);
+  font-size: 0.82rem;
+}
+
+.recursos-juego {
+  display: grid;
+  gap: 8px;
+}
+
+.recursos-juego div,
+.indicadores-juego div,
+.detalle-sistema-juego div,
+.produccion-juego div,
+.infraestructura-juego div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(0, 229, 255, 0.08);
+  border-radius: 3px;
+  background: rgba(10, 15, 31, 0.55);
+}
+
+.recursos-juego div {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+}
+
+.recursos-juego svg:nth-child(1) {
+  color: var(--cyan);
+}
+
+.recursos-juego span,
+.indicadores-juego span,
+.detalle-sistema-juego span,
+.produccion-juego span,
+.infraestructura-juego span {
+  color: var(--texto-secundario);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.recursos-juego strong,
+.indicadores-juego strong,
+.detalle-sistema-juego strong,
+.produccion-juego em,
+.infraestructura-juego em {
+  color: var(--texto-principal);
+  font-family: var(--fuente-mono);
+  font-size: 0.78rem;
+  font-style: normal;
+}
+
+.indicadores-juego,
+.detalle-sistema-juego,
+.produccion-juego,
+.infraestructura-juego {
+  display: grid;
+  gap: 8px;
+}
+
+.produccion-juego > strong,
+.infraestructura-juego > strong {
+  color: var(--ambar);
+  font-family: var(--fuente-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.aviso-tecla-u {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  border-color: rgba(255, 200, 87, 0.18);
+  background: rgba(255, 200, 87, 0.04);
+}
+
+.aviso-tecla-u svg {
+  color: var(--ambar);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.aviso-tecla-u strong {
+  display: block;
+  color: var(--ambar);
+  font-family: var(--fuente-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.aviso-tecla-u span {
+  display: block;
+  margin-top: 4px;
+  color: var(--texto-secundario);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.aviso-tecla-u.activo {
+  border-color: rgba(0, 229, 255, 0.28);
+  background: rgba(0, 229, 255, 0.06);
+}
+
+.panel-mapa-juego {
+  position: relative;
+  padding: 14px;
+  overflow: hidden;
+}
+
+.barra-mapa-juego,
+.leyenda-mapa-juego {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(0, 229, 255, 0.09);
+  border-radius: 4px;
+  background: rgba(10, 15, 31, 0.62);
+}
+
+.barra-mapa-juego div,
+.leyenda-mapa-juego span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.barra-mapa-juego span,
+.barra-mapa-juego strong,
+.leyenda-mapa-juego span {
+  color: var(--texto-secundario);
+  font-family: var(--fuente-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.barra-mapa-juego svg {
+  color: var(--cyan);
+}
+
+.mapa-galactico-juego {
+  position: relative;
+  height: 465px;
+  margin: 14px 0;
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  border-radius: 4px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at center, rgba(0, 229, 255, 0.08), transparent 34%),
+    radial-gradient(circle at 25% 75%, rgba(255, 45, 149, 0.07), transparent 24%),
+    rgba(5, 9, 22, 0.74);
+}
+
+.mapa-galactico-juego::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.025) 1px, transparent 1px);
+  background-size: 34px 34px;
+  pointer-events: none;
+}
+
+.rutas-galacticas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.ruta-galactica {
+  stroke: rgba(0, 229, 255, 0.22);
+  stroke-width: 0.24;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 4px rgba(0, 229, 255, 0.35));
+}
+
+.nodo-sistema-juego {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  background: rgba(13, 21, 48, 0.96);
+  color: var(--texto-principal);
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.08);
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.nodo-sistema-juego:hover,
+.nodo-sistema-juego.seleccionado {
+  transform: translate(-50%, -50%) scale(1.12);
+  border-color: var(--texto-principal);
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.28);
+}
+
+.nodo-sistema-juego span {
+  display: block;
+  font-family: var(--fuente-mono);
+  font-size: 0.72rem;
+}
+
+.nodo-sistema-juego em {
+  position: absolute;
+  left: 50%;
+  top: 45px;
+  transform: translateX(-50%);
+  min-width: 72px;
+  color: var(--texto-secundario);
+  font-family: var(--fuente-ui);
+  font-size: 0.66rem;
+  font-style: normal;
+  line-height: 1;
+  opacity: 0.75;
+  pointer-events: none;
+  text-shadow: 0 1px 4px #000;
+}
+
+.nodo-sistema-juego.propio {
+  border-color: rgba(0, 229, 255, 0.85);
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.26), rgba(13, 21, 48, 0.96));
+}
+
+.nodo-sistema-juego.enemigo {
+  border-color: rgba(255, 45, 149, 0.8);
+  background: radial-gradient(circle, rgba(255, 45, 149, 0.22), rgba(13, 21, 48, 0.96));
+}
+
+.nodo-sistema-juego.neutral {
+  border-color: rgba(159, 179, 200, 0.46);
+}
+
+.punto-leyenda {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.punto-leyenda.propio {
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+
+.punto-leyenda.enemigo {
+  background: var(--magenta);
+  box-shadow: 0 0 8px var(--magenta);
+}
+
+.punto-leyenda.neutral {
+  background: var(--texto-secundario);
+}
+
+.franja-inferior-juego {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.1fr;
+  gap: 14px;
+}
+
+.panel-acciones-juego,
+.panel-eventos-juego {
+  min-height: 150px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.botones-acciones-juego {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.botones-acciones-juego button {
+  padding: 9px 11px;
+  border: 1px solid rgba(0, 229, 255, 0.13);
+  border-radius: 3px;
+  background: rgba(0, 229, 255, 0.04);
+  color: var(--texto-secundario);
+  font-family: var(--fuente-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.botones-acciones-juego button:disabled {
+  opacity: 0.46;
+  cursor: not-allowed;
+}
+
+.panel-acciones-juego p {
+  margin: 0;
+  color: var(--texto-secundario);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.lista-eventos-juego {
+  display: grid;
+  gap: 7px;
+  max-height: 92px;
+  overflow: auto;
+}
+
+.lista-eventos-juego span {
+  padding: 7px 9px;
+  border-left: 2px solid rgba(0, 229, 255, 0.42);
+  background: rgba(0, 229, 255, 0.04);
+  color: var(--texto-secundario);
+  font-family: var(--fuente-mono);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 1180px) {
+  .tablero-juego {
+    grid-template-columns: 1fr;
+  }
+
+  .mapa-galactico-juego {
+    height: 560px;
+  }
+
+  .franja-inferior-juego {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .vista-juego {
+    padding: 18px 14px 22px;
+  }
+
+  .cabecera-juego {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .acciones-cabecera-juego {
+    justify-content: flex-start;
+  }
+
+  .mapa-galactico-juego {
+    height: 480px;
+  }
+
+  .nodo-sistema-juego {
+    width: 34px;
+    height: 34px;
+  }
+
+  .nodo-sistema-juego em {
+    display: none;
+  }
+
+  .leyenda-mapa-juego {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
