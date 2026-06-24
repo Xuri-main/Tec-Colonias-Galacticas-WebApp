@@ -1,14 +1,14 @@
 /*
     Archivo: Juego.tsx
-    Descripcion: Vista principal del juego con mapa galactico, paneles de informacion y controles tacticos iniciales.
+    Descripcion: Vista principal del juego con mapa galactico, paneles de informacion y controles tacticos.
     Autores: Emilio Funes R. , Ginger Rodriguez G. & Jareck Levell C.
     Fecha: 21/06/2026
 */
 
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Boxes, Cpu, Crosshair, Hammer, Orbit, Radio, RefreshCcw, Rocket, Shield, Swords, Timer, Zap } from 'lucide-react';
-import { obtenerPartidaPorId } from '../servicios/servicioPartidas';
-import { GalaxiaResumen, JugadorResumen, PartidaDetalle, Recursos, RutaResumen, SistemaResumen } from '../tipos/tiposJuego';
+import { construirEnPartida, moverFlotasEnPartida, obtenerPartidaPorId } from '../servicios/servicioPartidas';
+import { GalaxiaResumen, JugadorResumen, PartidaDetalle, Recursos, RutaResumen, SistemaResumen, TipoConstruccion } from '../tipos/tiposJuego';
 
 interface PropiedadesJuego {
   nickname: string;
@@ -57,6 +57,29 @@ const produccionPorTipo: Record<string, Recursos> = {
   cientifico: { minerales: 40, energia: 40, cristales: 30 },
   balanceado: { minerales: 35, energia: 35, cristales: 35 }
 };
+
+const costosConstruccion: Record<TipoConstruccion, Recursos> = {
+  mina: { minerales: 100, energia: 0, cristales: 0 },
+  centroInvestigacion: { minerales: 80, energia: 50, cristales: 200 },
+  astillero: { minerales: 150, energia: 100, cristales: 10 },
+  fortaleza: { minerales: 200, energia: 100, cristales: 30 }
+};
+
+const nombresConstruccion: Record<TipoConstruccion, string> = {
+  mina: 'Mina',
+  centroInvestigacion: 'Centro investigacion',
+  astillero: 'Astillero',
+  fortaleza: 'Fortaleza'
+};
+
+const descripcionConstruccion: Record<TipoConstruccion, string> = {
+  mina: 'Aumenta la infraestructura minera del sistema.',
+  centroInvestigacion: 'Mejora la produccion por ciclo mediante centrales.',
+  astillero: 'Agrega una flota militar estacionada.',
+  fortaleza: 'Refuerza la defensa del sistema.'
+};
+
+const listaConstrucciones: TipoConstruccion[] = ['mina', 'centroInvestigacion', 'astillero', 'fortaleza'];
 
 /*
      obtenerNombreGalaxia
@@ -154,20 +177,26 @@ function obtenerNombrePropietario(sistema: SistemaResumen | null, jugadores: Jug
 
 /*
      obtenerClaseSistema
-    Entradas: Sistema y jugador actual.
+    Entradas: Sistema, jugador actual, origen y destino de flotas.
     Salidas: Clase CSS del nodo.
-    Objetivo: Diferenciar visualmente sistemas propios, enemigos y neutrales.
+    Objetivo: Diferenciar visualmente sistemas propios, enemigos, neutrales y sistemas marcados para movimiento.
 */
-function obtenerClaseSistema(sistema: SistemaResumen, jugadorActual?: JugadorResumen): string {
-  if (!sistema.propietarioId) {
-    return 'neutral';
+function obtenerClaseSistema(sistema: SistemaResumen, jugadorActual: JugadorResumen | undefined, idOrigen: string, idDestino: string): string {
+  let clase = 'neutral';
+
+  if (sistema.propietarioId) {
+    clase = jugadorActual && sistema.propietarioId === jugadorActual.id ? 'propio' : 'enemigo';
   }
 
-  if (jugadorActual && sistema.propietarioId === jugadorActual.id) {
-    return 'propio';
+  if (sistema.id === idOrigen) {
+    clase += ' origen-flotas';
   }
 
-  return 'enemigo';
+  if (sistema.id === idDestino) {
+    clase += ' destino-flotas';
+  }
+
+  return clase;
 }
 
 /*
@@ -195,25 +224,99 @@ function contarSistemasJugador(sistemas: SistemaResumen[], jugadorActual?: Jugad
 }
 
 /*
+     puedePagar
+    Entradas: Recursos actuales y costo.
+    Salidas: Verdadero si el jugador posee los recursos necesarios.
+    Objetivo: Deshabilitar acciones de construccion imposibles desde la interfaz.
+*/
+function puedePagar(recursos: Recursos | undefined, costo: Recursos): boolean {
+  if (!recursos) {
+    return false;
+  }
+
+  return recursos.minerales >= costo.minerales && recursos.energia >= costo.energia && recursos.cristales >= costo.cristales;
+}
+
+/*
+     esSistemaPropio
+    Entradas: Sistema y jugador actual.
+    Salidas: Verdadero si el sistema pertenece al jugador.
+    Objetivo: Validar construcciones y origenes de flotas.
+*/
+function esSistemaPropio(sistema: SistemaResumen | null | undefined, jugadorActual: JugadorResumen | undefined): boolean {
+  return Boolean(sistema && jugadorActual && sistema.propietarioId === jugadorActual.id);
+}
+
+/*
+     existeRutaDirecta
+    Entradas: Rutas, id de origen e id de destino.
+    Salidas: Verdadero si ambos sistemas estan conectados directamente.
+    Objetivo: Validar movimientos antes de enviarlos al backend.
+*/
+function existeRutaDirecta(rutas: RutaResumen[], origenId: string, destinoId: string): boolean {
+  if (!origenId || !destinoId) {
+    return false;
+  }
+
+  return rutas.some((ruta) => {
+    const extremos = obtenerExtremosRuta(ruta);
+    return (extremos.origen === origenId && extremos.destino === destinoId) || (extremos.origen === destinoId && extremos.destino === origenId);
+  });
+}
+
+/*
+     obtenerNombreSistema
+    Entradas: Sistemas e id de sistema.
+    Salidas: Nombre visible del sistema.
+    Objetivo: Mostrar origen y destino seleccionados con nombres entendibles.
+*/
+function obtenerNombreSistema(sistemas: SistemaResumen[], sistemaId: string): string {
+  const sistema = sistemas.find((actual) => actual.id === sistemaId);
+  return sistema ? `${sistema.nombre} (${sistema.id})` : 'No seleccionado';
+}
+
+/*
+     describirCosto
+    Entradas: Costo de construccion.
+    Salidas: Texto con minerales, energia y cristales.
+    Objetivo: Mostrar el costo de manera compacta en los botones.
+*/
+function describirCosto(costo: Recursos): string {
+  return `M ${costo.minerales} / E ${costo.energia} / C ${costo.cristales}`;
+}
+
+/*
      Juego
     Entradas: Nickname, id de partida, id de jugador y funciones de navegacion.
     Salidas: Retorna la interfaz principal del juego.
-    Objetivo: Mostrar el mapa galactico y los paneles necesarios para controlar la partida.
+    Objetivo: Mostrar el mapa galactico y permitir construir, mover flotas y ejecutar conquistas.
 */
 export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, volverAlMenu }: PropiedadesJuego) {
   const [partida, setPartida] = useState<PartidaDetalle | null>(null);
   const [idSistemaSeleccionado, setIdSistemaSeleccionado] = useState('');
+  const [idOrigenFlotas, setIdOrigenFlotas] = useState('');
+  const [idDestinoFlotas, setIdDestinoFlotas] = useState('');
+  const [cantidadFlotas, setCantidadFlotas] = useState(1);
   const [mensaje, setMensaje] = useState('Cargando campo galactico...');
   const [cargando, setCargando] = useState(false);
-  const [teclaUDetectada, setTeclaUDetectada] = useState(false);
+  const [procesandoAccion, setProcesandoAccion] = useState(false);
+  const [juegoHabilitado, setJuegoHabilitado] = useState(false);
+  const [cuentaRegresiva, setCuentaRegresiva] = useState<number | null>(null);
 
   const sistemas = useMemo(() => obtenerSistemas(partida), [partida]);
   const rutas = useMemo(() => obtenerRutas(partida), [partida]);
   const jugadorActual = obtenerJugadorActual(partida, nickname, idJugadorActual);
   const sistemaSeleccionado = sistemas.find((sistema) => sistema.id === idSistemaSeleccionado) || sistemas[0] || null;
+  const origenFlotas = sistemas.find((sistema) => sistema.id === idOrigenFlotas) || null;
+  const destinoFlotas = sistemas.find((sistema) => sistema.id === idDestinoFlotas) || null;
   const produccionSeleccionada = obtenerProduccion(sistemaSeleccionado?.tipo);
   const sistemasControlados = contarSistemasJugador(sistemas, jugadorActual);
   const jugadores = partida?.jugadores || [];
+  const sistemaSeleccionadoPropio = esSistemaPropio(sistemaSeleccionado, jugadorActual);
+  const origenValido = esSistemaPropio(origenFlotas, jugadorActual);
+  const rutaValida = existeRutaDirecta(rutas, idOrigenFlotas, idDestinoFlotas);
+  const cantidadDisponible = origenFlotas?.flotas || 0;
+  const accionesBloqueadas = !juegoHabilitado || partida?.estado !== 'iniciada' || procesandoAccion;
 
   /*
        cargarPartida
@@ -234,7 +337,10 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
 
       const datos = await obtenerPartidaPorId(idPartida);
       setPartida(datos);
-      setMensaje('Estado galactico sincronizado con el servidor.');
+
+      if (!silencioso) {
+        setMensaje('Estado galactico sincronizado con el servidor.');
+      }
 
       const listaSistemas = obtenerSistemas(datos);
       if (!idSistemaSeleccionado && listaSistemas.length > 0) {
@@ -257,13 +363,196 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
   useEffect(() => {
     const manejarTecla = (evento: KeyboardEvent) => {
       if (evento.key.toLowerCase() === 'u') {
-        setTeclaUDetectada(true);
+        prepararInicioOperativo();
       }
     };
 
     window.addEventListener('keydown', manejarTecla);
     return () => window.removeEventListener('keydown', manejarTecla);
-  }, []);
+  }, [partida, juegoHabilitado, cuentaRegresiva]);
+
+  useEffect(() => {
+    if (cuentaRegresiva === null) {
+      return;
+    }
+
+    if (cuentaRegresiva <= 0) {
+      setCuentaRegresiva(null);
+      setJuegoHabilitado(true);
+      setMensaje('Cuenta regresiva finalizada. Operaciones tacticas habilitadas.');
+      return;
+    }
+
+    const temporizador = window.setTimeout(() => {
+      setCuentaRegresiva(cuentaRegresiva - 1);
+    }, 1000);
+
+    return () => window.clearTimeout(temporizador);
+  }, [cuentaRegresiva]);
+
+  /*
+       prepararInicioOperativo
+      Entradas: No recibe entradas.
+      Salidas: No retorna valor.
+      Objetivo: Activar la cuenta regresiva local con la tecla U antes de permitir acciones.
+  */
+  const prepararInicioOperativo = () => {
+    if (juegoHabilitado || cuentaRegresiva !== null) {
+      return;
+    }
+
+    if (partida?.estado !== 'iniciada') {
+      setMensaje('La partida todavia no esta iniciada desde la sala de espera.');
+      return;
+    }
+
+    setCuentaRegresiva(3);
+    setMensaje('Orden U recibida. Iniciando cuenta regresiva operativa.');
+  };
+
+  /*
+       manejarSeleccionSistema
+      Entradas: Id del sistema seleccionado en el mapa.
+      Salidas: No retorna valor.
+      Objetivo: Actualizar el sistema activo para inspeccion y acciones.
+  */
+  const manejarSeleccionSistema = (sistemaId: string) => {
+    setIdSistemaSeleccionado(sistemaId);
+  };
+
+  /*
+       construir
+      Entradas: Tipo de construccion solicitado.
+      Salidas: No retorna valor.
+      Objetivo: Enviar al backend una orden de construccion validando datos basicos en interfaz.
+  */
+  const construir = async (tipoConstruccion: TipoConstruccion) => {
+    if (accionesBloqueadas) {
+      setMensaje('Debe presionar U y esperar la cuenta regresiva antes de ejecutar acciones.');
+      return;
+    }
+
+    if (!jugadorActual) {
+      setMensaje('No se encontro el jugador actual en la partida.');
+      return;
+    }
+
+    if (!sistemaSeleccionado || !sistemaSeleccionadoPropio) {
+      setMensaje('Seleccione un sistema propio para construir.');
+      return;
+    }
+
+    const costo = costosConstruccion[tipoConstruccion];
+
+    if (!puedePagar(jugadorActual.recursos, costo)) {
+      setMensaje('Recursos insuficientes para ejecutar esta construccion.');
+      return;
+    }
+
+    try {
+      setProcesandoAccion(true);
+      setMensaje(`Construyendo ${nombresConstruccion[tipoConstruccion]} en ${sistemaSeleccionado.nombre}...`);
+      const datos = await construirEnPartida(idPartida, jugadorActual.id, sistemaSeleccionado.id, tipoConstruccion);
+      setPartida(datos);
+      setMensaje(`${nombresConstruccion[tipoConstruccion]} construida correctamente en ${sistemaSeleccionado.nombre}.`);
+    } catch (error: any) {
+      setMensaje(error.message || 'No se pudo completar la construccion.');
+    } finally {
+      setProcesandoAccion(false);
+    }
+  };
+
+  /*
+       fijarOrigenFlotas
+      Entradas: No recibe entradas.
+      Salidas: No retorna valor.
+      Objetivo: Usar el sistema seleccionado como origen del movimiento de flotas.
+  */
+  const fijarOrigenFlotas = () => {
+    if (!sistemaSeleccionado || !esSistemaPropio(sistemaSeleccionado, jugadorActual)) {
+      setMensaje('El origen debe ser un sistema controlado por su comandante.');
+      return;
+    }
+
+    setIdOrigenFlotas(sistemaSeleccionado.id);
+    setCantidadFlotas(1);
+    setMensaje(`${sistemaSeleccionado.nombre} marcado como origen de flotas.`);
+  };
+
+  /*
+       fijarDestinoFlotas
+      Entradas: No recibe entradas.
+      Salidas: No retorna valor.
+      Objetivo: Usar el sistema seleccionado como destino del movimiento de flotas.
+  */
+  const fijarDestinoFlotas = () => {
+    if (!sistemaSeleccionado) {
+      setMensaje('Seleccione un sistema del mapa para usarlo como destino.');
+      return;
+    }
+
+    if (sistemaSeleccionado.id === idOrigenFlotas) {
+      setMensaje('El destino debe ser diferente al origen.');
+      return;
+    }
+
+    setIdDestinoFlotas(sistemaSeleccionado.id);
+    setMensaje(`${sistemaSeleccionado.nombre} marcado como destino de flotas.`);
+  };
+
+  /*
+       moverFlotas
+      Entradas: No recibe entradas.
+      Salidas: No retorna valor.
+      Objetivo: Enviar al backend una orden de movimiento o conquista.
+  */
+  const moverFlotas = async () => {
+    if (accionesBloqueadas) {
+      setMensaje('Debe presionar U y esperar la cuenta regresiva antes de mover flotas.');
+      return;
+    }
+
+    if (!jugadorActual) {
+      setMensaje('No se encontro el jugador actual en la partida.');
+      return;
+    }
+
+    if (!idOrigenFlotas || !idDestinoFlotas) {
+      setMensaje('Debe seleccionar origen y destino para mover flotas.');
+      return;
+    }
+
+    if (!origenValido) {
+      setMensaje('El origen elegido no pertenece a su comandante.');
+      return;
+    }
+
+    if (!rutaValida) {
+      setMensaje('El origen y el destino no estan conectados directamente.');
+      return;
+    }
+
+    if (cantidadFlotas <= 0 || cantidadFlotas > cantidadDisponible) {
+      setMensaje('La cantidad de flotas debe ser mayor a cero y no puede superar las flotas disponibles.');
+      return;
+    }
+
+    try {
+      setProcesandoAccion(true);
+      setMensaje('Enviando orden de movimiento de flotas al servidor...');
+      const datos = await moverFlotasEnPartida(idPartida, jugadorActual.id, idOrigenFlotas, idDestinoFlotas, cantidadFlotas);
+      setPartida(datos);
+      setIdSistemaSeleccionado(idDestinoFlotas);
+      setIdOrigenFlotas('');
+      setIdDestinoFlotas('');
+      setCantidadFlotas(1);
+      setMensaje('Movimiento de flotas procesado correctamente. Revise los eventos recientes.');
+    } catch (error: any) {
+      setMensaje(error.message || 'No se pudo mover las flotas.');
+    } finally {
+      setProcesandoAccion(false);
+    }
+  };
 
   return (
     <section className="vista-juego animacion-entrada">
@@ -276,15 +565,19 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
           <span className="etiqueta-vista">Campo de batalla</span>
           <h2>{obtenerNombreGalaxia(partida)}</h2>
           <p>
-            Comandante <strong>{nickname || 'sin identificar'}</strong>, esta es la interfaz tactica inicial para visualizar
-            sistemas, rutas, recursos, propietarios, flotas e infraestructura.
+            Comandante <strong>{nickname || 'sin identificar'}</strong>, administre recursos, construcciones y flotas
+            desde esta consola tactica sincronizada con el servidor.
           </p>
         </div>
 
         <div className="acciones-cabecera-juego">
-          <button type="button" onClick={() => cargarPartida()} disabled={cargando}>
+          <button type="button" onClick={() => cargarPartida()} disabled={cargando || procesandoAccion}>
             <RefreshCcw size={15} />
             {cargando ? 'Sincronizando' : 'Sincronizar'}
+          </button>
+          <button type="button" onClick={prepararInicioOperativo} disabled={juegoHabilitado || cuentaRegresiva !== null || partida?.estado !== 'iniciada'}>
+            <Timer size={15} />
+            {juegoHabilitado ? 'Operativo' : cuentaRegresiva !== null ? `Inicio ${cuentaRegresiva}` : 'Orden U'}
           </button>
           <button type="button" onClick={volverAlMenu}>
             <Radio size={15} />
@@ -294,6 +587,20 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
       </div>
 
       {mensaje && <div className="mensaje-juego">{mensaje}</div>}
+
+      <div className={juegoHabilitado ? 'banda-operativa activa' : 'banda-operativa'}>
+        <Timer size={17} />
+        <div>
+          <strong>
+            {juegoHabilitado ? 'Operaciones habilitadas' : cuentaRegresiva !== null ? `Cuenta regresiva: ${cuentaRegresiva}` : 'Esperando tecla U'}
+          </strong>
+          <span>
+            {juegoHabilitado
+              ? 'Las ordenes de construccion, movimiento y conquista ya pueden enviarse al backend.'
+              : 'Antes de ejecutar acciones tacticas, presione U para confirmar el inicio operativo de esta interfaz.'}
+          </span>
+        </div>
+      </div>
 
       <div className="tablero-juego">
         <aside className="panel-juego panel-comandante">
@@ -336,16 +643,18 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
               <strong>{partida?.estado || 'cargando'}</strong>
             </div>
             <div>
-              <span>Tecla U</span>
-              <strong>{teclaUDetectada ? 'Detectada' : 'Pendiente'}</strong>
+              <span>Operacion local</span>
+              <strong>{juegoHabilitado ? 'Activa' : 'Bloqueada'}</strong>
             </div>
           </div>
 
-          <div className={teclaUDetectada ? 'aviso-tecla-u activo' : 'aviso-tecla-u'}>
+          <div className={juegoHabilitado ? 'aviso-tecla-u activo' : 'aviso-tecla-u'}>
             <Timer size={17} />
             <div>
-              <strong>{teclaUDetectada ? 'Orden U registrada' : 'Presione U para armar inicio'}</strong>
-              <span>La cuenta regresiva real se conectara en la segunda parte de esta vista.</span>
+              <strong>{juegoHabilitado ? 'Orden U completada' : 'Presione U para activar'}</strong>
+              <span>
+                Esta proteccion evita enviar acciones desde la interfaz antes de que el jugador confirme el arranque.
+              </span>
             </div>
           </div>
         </aside>
@@ -365,6 +674,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
                 const extremos = obtenerExtremosRuta(ruta);
                 const origen = posicionesSistemas[extremos.origen];
                 const destino = posicionesSistemas[extremos.destino];
+                const marcada = (extremos.origen === idOrigenFlotas && extremos.destino === idDestinoFlotas) || (extremos.origen === idDestinoFlotas && extremos.destino === idOrigenFlotas);
 
                 if (!origen || !destino) {
                   return null;
@@ -377,7 +687,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
                     y1={origen.y}
                     x2={destino.x}
                     y2={destino.y}
-                    className="ruta-galactica"
+                    className={marcada ? 'ruta-galactica marcada' : 'ruta-galactica'}
                   />
                 );
               })}
@@ -385,7 +695,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
 
             {sistemas.map((sistema) => {
               const posicion = posicionesSistemas[sistema.id] || { x: 50, y: 50 };
-              const claseSistema = obtenerClaseSistema(sistema, jugadorActual);
+              const claseSistema = obtenerClaseSistema(sistema, jugadorActual, idOrigenFlotas, idDestinoFlotas);
               const seleccionado = sistema.id === sistemaSeleccionado?.id;
 
               return (
@@ -394,7 +704,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
                   type="button"
                   className={`nodo-sistema-juego ${claseSistema} ${seleccionado ? 'seleccionado' : ''}`}
                   style={{ left: `${posicion.x}%`, top: `${posicion.y}%` }}
-                  onClick={() => setIdSistemaSeleccionado(sistema.id)}
+                  onClick={() => manejarSeleccionSistema(sistema.id)}
                   title={sistema.nombre}
                 >
                   <span>{sistema.id.replace('S', '')}</span>
@@ -408,6 +718,8 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
             <span><i className="punto-leyenda propio" /> Propio</span>
             <span><i className="punto-leyenda enemigo" /> Enemigo</span>
             <span><i className="punto-leyenda neutral" /> Neutral</span>
+            <span><i className="punto-leyenda origen" /> Origen</span>
+            <span><i className="punto-leyenda destino" /> Destino</span>
           </div>
         </div>
 
@@ -470,33 +782,80 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
       </div>
 
       <div className="franja-inferior-juego">
-        <div className="panel-acciones-juego">
+        <div className="panel-acciones-juego panel-construccion-juego">
           <div className="titulo-panel-juego">
             <Hammer size={15} />
             <span>Construccion</span>
             <div />
           </div>
-          <div className="botones-acciones-juego">
-            <button type="button" disabled>Mina</button>
-            <button type="button" disabled>Centro investigacion</button>
-            <button type="button" disabled>Astillero</button>
-            <button type="button" disabled>Fortaleza</button>
+
+          {!sistemaSeleccionadoPropio && <p className="mensaje-bloqueo-acciones">Seleccione un sistema propio para habilitar construcciones.</p>}
+
+          <div className="tarjetas-construccion-juego">
+            {listaConstrucciones.map((tipo) => {
+              const costo = costosConstruccion[tipo];
+              const disponible = sistemaSeleccionadoPropio && puedePagar(jugadorActual?.recursos, costo) && !accionesBloqueadas;
+
+              return (
+                <button key={tipo} type="button" className="tarjeta-construccion-opcion" disabled={!disponible} onClick={() => construir(tipo)}>
+                  <strong>{nombresConstruccion[tipo]}</strong>
+                  <span>{descripcionConstruccion[tipo]}</span>
+                  <em>{describirCosto(costo)}</em>
+                </button>
+              );
+            })}
           </div>
-          <p>La interfaz queda preparada. En la segunda parte se conectaran estos botones con el backend.</p>
         </div>
 
-        <div className="panel-acciones-juego">
+        <div className="panel-acciones-juego panel-flotas-juego">
           <div className="titulo-panel-juego">
             <Swords size={15} />
             <span>Flotas y conquista</span>
             <div />
           </div>
-          <div className="botones-acciones-juego">
-            <button type="button" disabled>Seleccionar origen</button>
-            <button type="button" disabled>Seleccionar destino</button>
-            <button type="button" disabled>Mover flotas</button>
+
+          <div className="selector-flotas-juego">
+            <div>
+              <span>Origen</span>
+              <strong>{obtenerNombreSistema(sistemas, idOrigenFlotas)}</strong>
+            </div>
+            <button type="button" onClick={fijarOrigenFlotas} disabled={procesandoAccion || !sistemaSeleccionadoPropio}>
+              Usar seleccionado
+            </button>
           </div>
-          <p>El mapa ya permite seleccionar sistemas. Luego se agregara el flujo de origen, destino y cantidad.</p>
+
+          <div className="selector-flotas-juego">
+            <div>
+              <span>Destino</span>
+              <strong>{obtenerNombreSistema(sistemas, idDestinoFlotas)}</strong>
+            </div>
+            <button type="button" onClick={fijarDestinoFlotas} disabled={procesandoAccion || !sistemaSeleccionado || !idOrigenFlotas}>
+              Usar seleccionado
+            </button>
+          </div>
+
+          <div className="control-flotas-juego">
+            <label htmlFor="cantidad-flotas">Cantidad de flotas</label>
+            <input
+              id="cantidad-flotas"
+              type="number"
+              min="1"
+              max={Math.max(1, cantidadDisponible)}
+              value={cantidadFlotas}
+              onChange={(evento) => setCantidadFlotas(Number(evento.target.value))}
+            />
+            <span>Disponibles: {cantidadDisponible}</span>
+          </div>
+
+          <div className={rutaValida ? 'estado-ruta-juego valida' : 'estado-ruta-juego'}>
+            <span>Ruta directa</span>
+            <strong>{idOrigenFlotas && idDestinoFlotas ? rutaValida ? 'Valida' : 'No conectada' : 'Pendiente'}</strong>
+          </div>
+
+          <button className="boton-mover-flotas-juego" type="button" onClick={moverFlotas} disabled={accionesBloqueadas || !origenValido || !rutaValida || cantidadFlotas <= 0 || cantidadFlotas > cantidadDisponible}>
+            <Rocket size={15} />
+            Mover flotas
+          </button>
         </div>
 
         <div className="panel-eventos-juego">
@@ -506,7 +865,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
             <div />
           </div>
           <div className="lista-eventos-juego">
-            {(partida?.eventos || []).slice(-6).map((evento, indice) => (
+            {(partida?.eventos || []).slice(-8).map((evento, indice) => (
               <span key={`${evento}-${indice}`}>{evento}</span>
             ))}
             {(!partida?.eventos || partida.eventos.length === 0) && <span>Sin eventos registrados todavia.</span>}

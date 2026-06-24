@@ -5,7 +5,7 @@
     Fecha: 21/06/2026
 */
 
-import { NivelRecursosIniciales, PartidaDetalle, PartidaResumen, RespuestaApi } from '../tipos/tiposJuego';
+import { NivelRecursosIniciales, PartidaDetalle, PartidaResumen, RespuestaApi, TipoConstruccion } from '../tipos/tiposJuego';
 import { solicitar } from './clienteApi';
 
 export interface DatosCrearPartida {
@@ -77,6 +77,37 @@ export async function unirsePartida(idPartida: string, nickname: string): Promis
 export async function iniciarPartida(idPartida: string): Promise<PartidaDetalle> {
   const respuesta = await solicitar<RespuestaApi<PartidaDetalle>>(`/partidas/${idPartida}/iniciar`, {
     method: 'POST'
+  });
+
+  return respuesta.partida as PartidaDetalle;
+}
+
+
+/*
+     construirEnPartida
+    Entradas: Identificador de partida, jugador, sistema y tipo de construccion.
+    Salidas: Partida actualizada.
+    Objetivo: Solicitar al backend la construccion de una instalacion.
+*/
+export async function construirEnPartida(idPartida: string, jugadorId: string, sistemaId: string, tipoConstruccion: TipoConstruccion): Promise<PartidaDetalle> {
+  const respuesta = await solicitar<RespuestaApi<PartidaDetalle>>(`/partidas/${idPartida}/construir`, {
+    method: 'POST',
+    body: JSON.stringify({ jugadorId, sistemaId, tipoConstruccion })
+  });
+
+  return respuesta.partida as PartidaDetalle;
+}
+
+/*
+     moverFlotasEnPartida
+    Entradas: Identificador de partida, jugador, origen, destino y cantidad.
+    Salidas: Partida actualizada.
+    Objetivo: Solicitar al backend el movimiento de flotas y posible conquista.
+*/
+export async function moverFlotasEnPartida(idPartida: string, jugadorId: string, origenId: string, destinoId: string, cantidad: number): Promise<PartidaDetalle> {
+  const respuesta = await solicitar<RespuestaApi<PartidaDetalle>>(`/partidas/${idPartida}/mover-flotas`, {
+    method: 'POST',
+    body: JSON.stringify({ jugadorId, origenId, destinoId, cantidad })
   });
 
   return respuesta.partida as PartidaDetalle;

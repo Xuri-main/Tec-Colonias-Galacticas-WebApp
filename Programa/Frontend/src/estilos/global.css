@@ -2495,3 +2495,274 @@ button:focus {
     align-items: flex-start;
   }
 }
+
+.banda-operativa {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid rgba(255, 200, 87, 0.18);
+  border-radius: 4px;
+  background: rgba(255, 200, 87, 0.04);
+}
+
+.banda-operativa svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--ambar);
+}
+
+.banda-operativa strong {
+  display: block;
+  color: var(--ambar);
+  font-family: var(--fuente-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.banda-operativa span {
+  display: block;
+  margin-top: 3px;
+  color: var(--texto-secundario);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.banda-operativa.activa {
+  border-color: rgba(0, 229, 255, 0.28);
+  background: rgba(0, 229, 255, 0.055);
+}
+
+.banda-operativa.activa svg,
+.banda-operativa.activa strong {
+  color: var(--cyan);
+}
+
+.ruta-galactica.marcada {
+  stroke: rgba(255, 200, 87, 0.95);
+  stroke-width: 0.45;
+  filter: drop-shadow(0 0 8px rgba(255, 200, 87, 0.72));
+}
+
+.nodo-sistema-juego.origen-flotas {
+  border-color: rgba(255, 200, 87, 0.95);
+  box-shadow: 0 0 26px rgba(255, 200, 87, 0.3);
+}
+
+.nodo-sistema-juego.destino-flotas {
+  border-color: rgba(255, 45, 149, 0.95);
+  box-shadow: 0 0 26px rgba(255, 45, 149, 0.32);
+}
+
+.punto-leyenda.origen {
+  background: var(--ambar);
+  box-shadow: 0 0 8px var(--ambar);
+}
+
+.punto-leyenda.destino {
+  background: var(--magenta);
+  box-shadow: 0 0 8px var(--magenta);
+}
+
+.mensaje-bloqueo-acciones {
+  border-left: 2px solid rgba(255, 200, 87, 0.5);
+  padding-left: 9px;
+}
+
+.tarjetas-construccion-juego {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tarjeta-construccion-opcion {
+  text-align: left;
+  min-height: 104px;
+  padding: 10px;
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  border-radius: 4px;
+  background: rgba(0, 229, 255, 0.04);
+  color: var(--texto-principal);
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.tarjeta-construccion-opcion:hover:not(:disabled) {
+  border-color: rgba(0, 229, 255, 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 0 22px rgba(0, 229, 255, 0.12);
+}
+
+.tarjeta-construccion-opcion:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.tarjeta-construccion-opcion strong {
+  display: block;
+  color: var(--texto-principal);
+  font-family: var(--fuente-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.tarjeta-construccion-opcion span {
+  display: block;
+  margin: 6px 0;
+  color: var(--texto-secundario);
+  font-size: 0.74rem;
+  line-height: 1.25;
+}
+
+.tarjeta-construccion-opcion em {
+  display: inline-flex;
+  color: var(--ambar);
+  font-family: var(--fuente-mono);
+  font-size: 0.65rem;
+  font-style: normal;
+  letter-spacing: 0.07em;
+}
+
+.panel-flotas-juego {
+  gap: 9px;
+}
+
+.selector-flotas-juego,
+.control-flotas-juego,
+.estado-ruta-juego {
+  display: grid;
+  gap: 7px;
+  padding: 9px;
+  border: 1px solid rgba(0, 229, 255, 0.1);
+  border-radius: 4px;
+  background: rgba(10, 15, 31, 0.56);
+}
+
+.selector-flotas-juego {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.selector-flotas-juego span,
+.control-flotas-juego label,
+.control-flotas-juego span,
+.estado-ruta-juego span {
+  color: var(--texto-secundario);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.selector-flotas-juego strong,
+.estado-ruta-juego strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--texto-principal);
+  font-family: var(--fuente-mono);
+  font-size: 0.7rem;
+}
+
+.selector-flotas-juego button,
+.boton-mover-flotas-juego {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid rgba(0, 229, 255, 0.18);
+  border-radius: 3px;
+  background: rgba(0, 229, 255, 0.05);
+  color: var(--texto-principal);
+  font-family: var(--fuente-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.selector-flotas-juego button:hover:not(:disabled),
+.boton-mover-flotas-juego:hover:not(:disabled) {
+  border-color: rgba(0, 229, 255, 0.5);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.12);
+}
+
+.selector-flotas-juego button:disabled,
+.boton-mover-flotas-juego:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.control-flotas-juego {
+  grid-template-columns: 1fr 90px;
+  align-items: center;
+}
+
+.control-flotas-juego label,
+.control-flotas-juego span {
+  grid-column: 1;
+}
+
+.control-flotas-juego input {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 9px;
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  border-radius: 3px;
+  background: rgba(0, 229, 255, 0.04);
+  color: var(--texto-principal);
+  font-family: var(--fuente-mono);
+}
+
+.control-flotas-juego input:focus {
+  outline: none;
+  border-color: rgba(0, 229, 255, 0.48);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.11);
+}
+
+.estado-ruta-juego {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  border-color: rgba(255, 200, 87, 0.16);
+}
+
+.estado-ruta-juego strong {
+  margin-top: 0;
+  color: var(--ambar);
+}
+
+.estado-ruta-juego.valida {
+  border-color: rgba(0, 229, 255, 0.24);
+  background: rgba(0, 229, 255, 0.045);
+}
+
+.estado-ruta-juego.valida strong {
+  color: var(--cyan);
+}
+
+.boton-mover-flotas-juego {
+  width: 100%;
+  min-height: 40px;
+  border-color: rgba(255, 45, 149, 0.25);
+  background: linear-gradient(135deg, rgba(255, 45, 149, 0.11), rgba(0, 229, 255, 0.045));
+}
+
+@media (max-width: 760px) {
+  .tarjetas-construccion-juego,
+  .selector-flotas-juego,
+  .control-flotas-juego,
+  .estado-ruta-juego {
+    grid-template-columns: 1fr;
+  }
+
+  .control-flotas-juego input,
+  .control-flotas-juego label,
+  .control-flotas-juego span {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}

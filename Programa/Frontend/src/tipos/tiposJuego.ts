@@ -9,6 +9,8 @@ export type VistaAplicacion = 'menu' | 'crear-partida' | 'unirse-partida' | 'sal
 
 export type NivelRecursosIniciales = 'bajo' | 'normal' | 'alto';
 
+export type TipoConstruccion = 'mina' | 'centroInvestigacion' | 'astillero' | 'fortaleza';
+
 export interface Recursos {
   minerales: number;
   energia: number;
