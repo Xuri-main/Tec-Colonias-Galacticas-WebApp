@@ -18,6 +18,7 @@ export class ServicioPartidas {
     private servicioRanking: ServicioRanking;
     private partidasGuardadasRanking: Set<string>;
     private avisarCambio: ((idPartida: string, estado: object) => void) | null;
+    private avisarCambioLista: (() => void) | null;
 
     /*
          constructor
@@ -32,6 +33,7 @@ export class ServicioPartidas {
         this.servicioRanking = servicioRanking;
         this.partidasGuardadasRanking = new Set<string>();
         this.avisarCambio = null;
+        this.avisarCambioLista = null;
     }
 
 
@@ -46,6 +48,16 @@ export class ServicioPartidas {
     }
 
     /*
+         setAvisarCambioLista
+        Entradas: Funcion sin parametros.
+        Salidas: No retorna valor.
+        Objetivo: Registrar una funcion para avisar cambios en la lista de partidas por WebSocket.
+    */
+    public setAvisarCambioLista(avisarCambioLista: () => void): void {
+        this.avisarCambioLista = avisarCambioLista;
+    }
+
+    /*
          crearPartida
         Entradas: Nombre, id de galaxia, maximo de jugadores, tiempo maximo y nivel de recursos.
         Salidas: Partida creada.
@@ -56,11 +68,16 @@ export class ServicioPartidas {
             throw new Error('El nombre de la partida debe tener al menos 3 caracteres.');
         }
 
+        if (this.existePartidaEnEsperaConNombre(nombre)) {
+            throw new Error('Ya existe una partida en espera con ese nombre. Use otro nombre para crear una sala nueva.');
+        }
+
         const galaxia = this.servicioGalaxias.obtenerGalaxiaPorId(idGalaxia);
         const idPartida = this.crearIdPartida();
         const partida = new Partida(idPartida, nombre, galaxia, maxJugadores, tiempoMaximoMinutos, nivelRecursosIniciales);
         this.partidas.set(idPartida, partida);
         this.programarCierrePorEspera(partida);
+        this.notificarCambioLista();
         return partida;
     }
 
@@ -99,6 +116,8 @@ export class ServicioPartidas {
     public unirJugador(idPartida: string, idSocket: string, nickname: string): object {
         const partida = this.obtenerPartida(idPartida);
         partida.agregarJugador(idSocket, nickname);
+        this.notificarCambioLista();
+        this.notificarCambioPartida(partida);
         return partida.obtenerEstadoPublico();
     }
 
@@ -112,6 +131,8 @@ export class ServicioPartidas {
         const partida = this.obtenerPartida(idPartida);
         partida.iniciar();
         this.iniciarCicloRecursos(partida);
+        this.notificarCambioLista();
+        this.notificarCambioPartida(partida);
         return partida.obtenerEstadoPublico();
     }
 
@@ -125,6 +146,8 @@ export class ServicioPartidas {
         const partida = this.obtenerPartida(idPartida);
         partida.construir(jugadorId, sistemaId, tipoConstruccion);
         this.guardarRankingSiFinalizo(partida);
+        this.notificarCambioPartida(partida);
+        this.notificarCambioLista();
         return partida.obtenerEstadoPublico();
     }
 
@@ -138,7 +161,53 @@ export class ServicioPartidas {
         const partida = this.obtenerPartida(idPartida);
         partida.moverFlotas(jugadorId, origenId, destinoId, cantidad);
         this.guardarRankingSiFinalizo(partida);
+        this.notificarCambioPartida(partida);
+        this.notificarCambioLista();
         return partida.obtenerEstadoPublico();
+    }
+
+    /*
+         notificarCambioPartida
+        Entradas: Partida actualizada.
+        Salidas: No retorna valor.
+        Objetivo: Avisar a los clientes conectados que una partida cambio de estado.
+    */
+    private notificarCambioPartida(partida: Partida): void {
+        if (this.avisarCambio) {
+            this.avisarCambio(partida.getId(), partida.obtenerEstadoPublico());
+        }
+    }
+
+    /*
+         notificarCambioLista
+        Entradas: No recibe entradas.
+        Salidas: No retorna valor.
+        Objetivo: Avisar a los clientes conectados que la lista de partidas cambio.
+    */
+    private notificarCambioLista(): void {
+        if (this.avisarCambioLista) {
+            this.avisarCambioLista();
+        }
+    }
+
+    /*
+         existePartidaEnEsperaConNombre
+        Entradas: Nombre de partida.
+        Salidas: Verdadero si ya existe una partida en espera con ese nombre.
+        Objetivo: Evitar salas duplicadas creadas por error con el mismo nombre.
+    */
+    private existePartidaEnEsperaConNombre(nombre: string): boolean {
+        const nombreNormalizado = nombre.trim().toLowerCase();
+
+        for (const partida of this.partidas.values()) {
+            const resumen = partida.obtenerResumen() as { nombre: string; estado: string };
+
+            if (resumen.estado === 'esperando' && resumen.nombre.trim().toLowerCase() === nombreNormalizado) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /*
@@ -162,6 +231,8 @@ export class ServicioPartidas {
 
         setTimeout(() => {
             partida.cerrarPorEspera();
+            this.notificarCambioPartida(partida);
+            this.notificarCambioLista();
         }, milisegundos);
     }
 
@@ -179,9 +250,7 @@ export class ServicioPartidas {
         const ciclo = setInterval(() => {
             partida.producirRecursos();
 
-            if (this.avisarCambio) {
-                this.avisarCambio(partida.getId(), partida.obtenerEstadoPublico());
-            }
+            this.notificarCambioPartida(partida);
 
             if (partida.getEstado() === 'finalizada') {
                 clearInterval(ciclo);

@@ -8,6 +8,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, CheckCircle, Clipboard, Copy, Crown, Hourglass, Play, RefreshCcw, Rocket, Shield, Users, Wifi, XCircle } from 'lucide-react';
 import { iniciarPartida, obtenerPartidaPorId, unirsePartida } from '../servicios/servicioPartidas';
+import { entrarSalaPartidaSocket, escucharCuentaRegresiva, escucharErrorJuego, escucharEstadoSocket, escucharPartidaActualizada, escucharPartidaIniciada, iniciarPartidaSocket, obtenerIdSocket, socketEstaConectado, unirsePartidaSocket } from '../servicios/servicioSocket';
 import { GalaxiaResumen, JugadorResumen, PartidaDetalle } from '../tipos/tiposJuego';
 
 interface PropiedadesSalaEspera {
@@ -16,6 +17,7 @@ interface PropiedadesSalaEspera {
   idJugadorActual: string;
   volverAlMenu: () => void;
   guardarJugadorActual: (idJugador: string) => void;
+  abrirJuego: () => void;
 }
 
 /*
@@ -76,13 +78,15 @@ function calcularPorcentajeCupos(partida: PartidaDetalle | null): number {
     Salidas: Interfaz de sala de espera.
     Objetivo: Consultar la partida, mostrar jugadores y permitir iniciar cuando la sala este completa.
 */
-export function SalaEspera({ nickname, idPartida, idJugadorActual, volverAlMenu, guardarJugadorActual }: PropiedadesSalaEspera) {
+export function SalaEspera({ nickname, idPartida, idJugadorActual, volverAlMenu, guardarJugadorActual, abrirJuego }: PropiedadesSalaEspera) {
   const [partida, setPartida] = useState<PartidaDetalle | null>(null);
   const [mensaje, setMensaje] = useState('');
   const [cargando, setCargando] = useState(false);
   const [iniciando, setIniciando] = useState(false);
   const [registrando, setRegistrando] = useState(false);
   const [codigoCopiado, setCodigoCopiado] = useState(false);
+  const [socketConectado, setSocketConectado] = useState(false);
+  const [cuentaRegresivaServidor, setCuentaRegresivaServidor] = useState<number | null>(null);
 
   /*
        cargarPartida
@@ -115,10 +119,58 @@ export function SalaEspera({ nickname, idPartida, idJugadorActual, volverAlMenu,
   };
 
   useEffect(() => {
+    const cancelarEstado = escucharEstadoSocket(setSocketConectado);
+
+    const cancelarActualizacion = escucharPartidaActualizada((datos) => {
+      if (datos.id !== idPartida) {
+        return;
+      }
+
+      setPartida(datos);
+      setRegistrando(false);
+      setIniciando(false);
+      setMensaje('Sala sincronizada en tiempo real por WebSocket.');
+
+      const jugador = buscarJugadorActual(datos, nickname, idJugadorActual);
+      if (jugador) {
+        guardarJugadorActual(jugador.id);
+      }
+    });
+
+    const cancelarInicio = escucharPartidaIniciada((datos) => {
+      if (datos.id !== idPartida) {
+        return;
+      }
+
+      setPartida(datos);
+      setIniciando(false);
+      setCuentaRegresivaServidor(null);
+      setMensaje('Partida iniciada por el servidor. Ya puede entrar al campo galactico.');
+    });
+
+    const cancelarCuenta = escucharCuentaRegresiva((segundos) => {
+      setCuentaRegresivaServidor(segundos);
+      setMensaje(`Cuenta regresiva del servidor: ${segundos} segundos.`);
+    });
+
+    const cancelarError = escucharErrorJuego((texto) => {
+      setMensaje(texto);
+      setRegistrando(false);
+      setIniciando(false);
+      setCuentaRegresivaServidor(null);
+    });
+
+    entrarSalaPartidaSocket(idPartida);
     cargarPartida();
-    const intervalo = window.setInterval(() => cargarPartida(true), 3000);
-    return () => window.clearInterval(intervalo);
-  }, [idPartida]);
+
+    return () => {
+      cancelarEstado();
+      cancelarActualizacion();
+      cancelarInicio();
+      cancelarCuenta();
+      cancelarError();
+    };
+  }, [idPartida, nickname, idJugadorActual]);
 
   const jugadorActual = buscarJugadorActual(partida, nickname, idJugadorActual);
   const usuarioDentroSala = Boolean(jugadorActual);
@@ -158,7 +210,13 @@ export function SalaEspera({ nickname, idPartida, idJugadorActual, volverAlMenu,
     try {
       setRegistrando(true);
       setMensaje('Registrando comandante en la sala...');
-      const datos = await unirsePartida(idPartida, nickname.trim());
+
+      if (socketEstaConectado()) {
+        unirsePartidaSocket(idPartida, nickname.trim());
+        return;
+      }
+
+      const datos = await unirsePartida(idPartida, nickname.trim(), obtenerIdSocket());
       setPartida(datos);
       const jugador = buscarJugadorActual(datos, nickname, '');
 
@@ -188,10 +246,16 @@ export function SalaEspera({ nickname, idPartida, idJugadorActual, volverAlMenu,
 
     try {
       setIniciando(true);
-      setMensaje('Enviando orden de inicio al servidor...');
+      setMensaje('Enviando orden de inicio al servidor por WebSocket...');
+
+      if (socketEstaConectado()) {
+        iniciarPartidaSocket(idPartida);
+        return;
+      }
+
       const datos = await iniciarPartida(idPartida);
       setPartida(datos);
-      setMensaje('Partida iniciada. El siguiente bloque del desarrollo conectara esta sala con la vista de juego.');
+      setMensaje('Partida iniciada. Ya puede entrar a la vista tactica del juego.');
     } catch (error: any) {
       setMensaje(error.message || 'No se pudo iniciar la partida.');
     } finally {
@@ -220,6 +284,7 @@ export function SalaEspera({ nickname, idPartida, idJugadorActual, volverAlMenu,
             <div>
               <Wifi size={17} />
               <span>{partida?.nombre || 'Cargando sala...'}</span>
+              <em className={socketConectado ? 'estado-socket conectado' : 'estado-socket'}>{socketConectado ? 'WS conectado' : 'WS desconectado'}</em>
             </div>
             <button type="button" onClick={() => cargarPartida()} disabled={cargando}>
               <RefreshCcw size={14} />
@@ -295,6 +360,10 @@ export function SalaEspera({ nickname, idPartida, idJugadorActual, volverAlMenu,
               <strong>{partida?.estado || 'cargando'}</strong>
             </div>
             <div className="linea-resumen">
+              <span>Cuenta servidor</span>
+              <strong>{cuentaRegresivaServidor === null ? 'Sin cuenta' : `${cuentaRegresivaServidor}s`}</strong>
+            </div>
+            <div className="linea-resumen">
               <span>Duracion</span>
               <strong>{partida?.tiempoMaximoMinutos || 'Pendiente'} min</strong>
             </div>
@@ -344,8 +413,12 @@ export function SalaEspera({ nickname, idPartida, idJugadorActual, volverAlMenu,
               <Rocket size={21} />
               <strong>La partida ya esta iniciada</strong>
               <p>
-                En el siguiente paso se desarrollara la vista del juego, el mapa galactico y la tecla U con cuenta regresiva.
+                Puede entrar a la vista tactica para revisar el mapa, sistemas, recursos, flotas e infraestructura.
               </p>
+              <button type="button" onClick={abrirJuego}>
+                <Rocket size={15} />
+                Entrar al campo galactico
+              </button>
             </div>
           )}
 

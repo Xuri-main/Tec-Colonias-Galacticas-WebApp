@@ -5,7 +5,7 @@
     Fecha: 21/06/2026
 */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FondoGalactico } from './componentes/fondo/FondoGalactico';
 import { BarraSuperior } from './componentes/interfaz/BarraSuperior';
 import { BarraInferior } from './componentes/interfaz/BarraInferior';
@@ -13,8 +13,10 @@ import { MenuPrincipal } from './paginas/MenuPrincipal';
 import { CrearPartida } from './paginas/CrearPartida';
 import { UnirsePartida } from './paginas/UnirsePartida';
 import { SalaEspera } from './paginas/SalaEspera';
+import { Juego } from './paginas/Juego';
 import { Ranking } from './paginas/Ranking';
 import { VistaAplicacion } from './tipos/tiposJuego';
+import { conectarSocket } from './servicios/servicioSocket';
 
 /*
      App
@@ -27,6 +29,10 @@ export default function App() {
   const [vistaActual, setVistaActual] = useState<VistaAplicacion>('menu');
   const [idPartidaActiva, setIdPartidaActiva] = useState('');
   const [idJugadorActual, setIdJugadorActual] = useState('');
+
+  useEffect(() => {
+    conectarSocket();
+  }, []);
 
   /*
        volverAlMenu
@@ -52,6 +58,16 @@ export default function App() {
     }
 
     setVistaActual('sala-espera');
+  };
+
+  /*
+       abrirJuego
+      Entradas: No recibe entradas.
+      Salidas: No retorna valor.
+      Objetivo: Cambiar a la vista principal del juego usando la partida activa.
+  */
+  const abrirJuego = () => {
+    setVistaActual('juego');
   };
 
   return (
@@ -91,6 +107,17 @@ export default function App() {
               idJugadorActual={idJugadorActual}
               volverAlMenu={volverAlMenu}
               guardarJugadorActual={setIdJugadorActual}
+              abrirJuego={abrirJuego}
+            />
+          )}
+
+          {vistaActual === 'juego' && (
+            <Juego
+              nickname={nickname}
+              idPartida={idPartidaActiva}
+              idJugadorActual={idJugadorActual}
+              volverSalaEspera={() => setVistaActual('sala-espera')}
+              volverAlMenu={volverAlMenu}
             />
           )}
 

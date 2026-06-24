@@ -19,6 +19,10 @@ export function configurarSocketJuego(io: Server, servicioPartidas: ServicioPart
         io.to(idPartida).emit('partida-actualizada', estado);
     });
 
+    servicioPartidas.setAvisarCambioLista(() => {
+        io.emit('partidas-actualizadas', servicioPartidas.listarPartidas());
+    });
+
     io.on('connection', (socket: Socket) => {
         socket.emit('partidas-actualizadas', servicioPartidas.listarPartidas());
 
@@ -31,7 +35,6 @@ export function configurarSocketJuego(io: Server, servicioPartidas: ServicioPart
                 const partida = servicioPartidas.unirJugador(datos.idPartida, socket.id, datos.nickname);
                 socket.join(datos.idPartida);
                 io.emit('partidas-actualizadas', servicioPartidas.listarPartidas());
-                io.to(datos.idPartida).emit('partida-actualizada', partida);
             } catch (error: any) {
                 socket.emit('error-juego', { mensaje: error.message });
             }

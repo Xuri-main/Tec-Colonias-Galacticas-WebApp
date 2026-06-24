@@ -8,6 +8,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { ArrowLeft, CheckCircle, Clipboard, Copy, Globe, RefreshCcw, Search, Users, Wifi, Zap } from 'lucide-react';
 import { obtenerPartidas, unirsePartida } from '../servicios/servicioPartidas';
+import { escucharErrorJuego, escucharEstadoSocket, escucharPartidasActualizadas, obtenerIdSocket, pedirPartidasActualizadas } from '../servicios/servicioSocket';
 import { GalaxiaResumen, PartidaDetalle, PartidaResumen } from '../tipos/tiposJuego';
 
 interface PropiedadesUnirsePartida {
@@ -54,6 +55,7 @@ export function UnirsePartida({ nickname, volverAlMenu, abrirSalaEspera }: Propi
   const [uniendoId, setUniendoId] = useState('');
   const [partidaUnida, setPartidaUnida] = useState<PartidaDetalle | null>(null);
   const [idCopiado, setIdCopiado] = useState(false);
+  const [socketConectado, setSocketConectado] = useState(false);
 
   /*
        cargarPartidas
@@ -75,9 +77,27 @@ export function UnirsePartida({ nickname, volverAlMenu, abrirSalaEspera }: Propi
   };
 
   useEffect(() => {
+    const cancelarEstado = escucharEstadoSocket(setSocketConectado);
+
+    const cancelarPartidas = escucharPartidasActualizadas((datos) => {
+      setPartidas(datos);
+      setCargando(false);
+      setMensaje(datos.length === 0 ? 'No hay partidas disponibles por el momento.' : 'Lista sincronizada en tiempo real.');
+    });
+
+    const cancelarError = escucharErrorJuego((texto) => {
+      setMensaje(texto);
+      setUniendoId('');
+    });
+
+    pedirPartidasActualizadas();
     cargarPartidas();
-    const intervalo = window.setInterval(cargarPartidas, 5000);
-    return () => window.clearInterval(intervalo);
+
+    return () => {
+      cancelarEstado();
+      cancelarPartidas();
+      cancelarError();
+    };
   }, []);
 
   /*
@@ -123,7 +143,7 @@ export function UnirsePartida({ nickname, volverAlMenu, abrirSalaEspera }: Propi
     try {
       setUniendoId(idPartida);
       setMensaje('Solicitando ingreso a la sala...');
-      const partida = await unirsePartida(idPartida.trim(), nickname.trim());
+      const partida = await unirsePartida(idPartida.trim(), nickname.trim(), obtenerIdSocket());
       setPartidaUnida(partida);
       setMensaje('Ingreso completado. Espere a que se complete la sala para iniciar.');
     } catch (error: any) {
@@ -276,6 +296,7 @@ export function UnirsePartida({ nickname, volverAlMenu, abrirSalaEspera }: Propi
             <div>
               <Wifi size={16} />
               <span>Partidas activas</span>
+              <em className={socketConectado ? 'estado-socket conectado' : 'estado-socket'}>{socketConectado ? 'WS conectado' : 'WS desconectado'}</em>
             </div>
             <button type="button" onClick={cargarPartidas} disabled={cargando}>
               <RefreshCcw size={14} />
@@ -360,8 +381,7 @@ export function UnirsePartida({ nickname, volverAlMenu, abrirSalaEspera }: Propi
           <div className="aviso-creacion">
             <Users size={15} />
             <p>
-              Esta pantalla actualiza la lista cada 5 segundos como solucion sencilla temporal.
-              Mas adelante se reemplazara por WebSockets para sincronizacion en tiempo real.
+              Esta pantalla escucha el evento de partidas actualizadas por WebSocket. El boton de actualizar queda como respaldo manual.
             </p>
           </div>
         </aside>
