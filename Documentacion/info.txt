@@ -1,0 +1,8 @@
+Nombre del curso: Lenguajes de programación [IC-4700]
+Número de semestre y año lectivo: I Semestre, 2026
+Nombres y carnet de los Estudiantes: Emilio Funes R.     - 2018216713 
+                                     Ginger Rodriguez G. - 2022035672
+				                             Jareck Levell C.    - 2021069542	
+Número de proyecto programado: 4
+Fecha de entrega: 23/06/2026
+Estatus de la entrega: Excelente
