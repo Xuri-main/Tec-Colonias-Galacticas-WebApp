@@ -5,7 +5,7 @@
     Fecha: 21/06/2026
 */
 
-export type VistaAplicacion = 'menu' | 'crear-partida' | 'unirse-partida' | 'sala-espera' | 'juego' | 'ranking';
+export type VistaAplicacion = 'menu' | 'crear-partida' | 'unirse-partida' | 'sala-espera' | 'juego' | 'fin-partida' | 'ranking';
 
 export type NivelRecursosIniciales = 'bajo' | 'normal' | 'alto';
 
@@ -60,6 +60,20 @@ export interface JugadorResumen {
   eliminado?: boolean;
 }
 
+export interface EstadisticaJugadorFinal {
+  posicion: number;
+  puntaje: number;
+  nombre: string;
+  jugadorId: string;
+  sistemasConquistados: number;
+  recursosAcumulados: Recursos;
+  flotasEnPie: number;
+  minasEnPie: number;
+  centrosEnPie: number;
+  fortalezasEnPie: number;
+  eliminado?: boolean;
+}
+
 export interface PartidaResumen {
   id: string;
   nombre: string;
@@ -76,6 +90,10 @@ export interface PartidaDetalle extends PartidaResumen {
   fechaCreacion?: string;
   fechaInicio?: string | null;
   fechaFinalizacion?: string | null;
+  razonFinalizacion?: string;
+  tiempoJugadoSegundos?: number;
+  ganador?: EstadisticaJugadorFinal | null;
+  estadisticasFinales?: EstadisticaJugadorFinal[];
   eventos?: string[];
 }
 
@@ -85,8 +103,12 @@ export interface RankingItem {
   recursosAcumulados: Recursos;
   galaxia: string;
   tiempoPartida: string;
-  idPartida: string;
+  tiempoPartidaSegundos?: number;
+  identificadorPartida?: string;
+  idPartida?: string;
   puntaje?: number;
+  razonFinalizacion?: string;
+  fechaRegistro?: string;
 }
 
 export interface RespuestaApi<T> {

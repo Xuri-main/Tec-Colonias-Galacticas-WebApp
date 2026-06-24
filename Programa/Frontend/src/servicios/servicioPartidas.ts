@@ -112,3 +112,18 @@ export async function moverFlotasEnPartida(idPartida: string, jugadorId: string,
 
   return respuesta.partida as PartidaDetalle;
 }
+
+/*
+     finalizarPartida
+    Entradas: Identificador de partida y razon opcional.
+    Salidas: Partida finalizada.
+    Objetivo: Solicitar al backend la finalizacion de una partida para calcular estadisticas y ranking.
+*/
+export async function finalizarPartida(idPartida: string, razon: string): Promise<PartidaDetalle> {
+  const respuesta = await solicitar<RespuestaApi<PartidaDetalle>>(`/partidas/${idPartida}/finalizar`, {
+    method: 'POST',
+    body: JSON.stringify({ razon })
+  });
+
+  return respuesta.partida as PartidaDetalle;
+}

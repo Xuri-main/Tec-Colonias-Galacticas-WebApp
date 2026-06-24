@@ -128,4 +128,19 @@ export class ControladorPartidas {
             res.status(400).json({ ok: false, mensaje: error.message });
         }
     }
+    /*
+         finalizar
+        Entradas: Solicitud con id de partida y razon opcional.
+        Salidas: Respuesta JSON con partida finalizada.
+        Objetivo: Finalizar una partida y generar sus estadisticas.
+    */
+    public finalizar(req: Request, res: Response): void {
+        try {
+            const { razon } = req.body;
+            const partida = this.servicioPartidas.finalizarPartida((req.params.id as string), razon || 'Finalizacion manual solicitada desde HTTP.');
+            res.json({ ok: true, partida });
+        } catch (error: any) {
+            res.status(400).json({ ok: false, mensaje: error.message });
+        }
+    }
 }

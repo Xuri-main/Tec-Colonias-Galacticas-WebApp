@@ -6,9 +6,9 @@
 */
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Boxes, Cpu, Crosshair, Hammer, Orbit, Radio, RefreshCcw, Rocket, Shield, Swords, Timer, Zap } from 'lucide-react';
-import { construirEnPartida, moverFlotasEnPartida, obtenerPartidaPorId } from '../servicios/servicioPartidas';
-import { construirSocket, entrarSalaPartidaSocket, escucharCuentaRegresiva, escucharErrorJuego, escucharEstadoSocket, escucharPartidaActualizada, escucharPartidaIniciada, moverFlotasSocket, socketEstaConectado } from '../servicios/servicioSocket';
+import { ArrowLeft, Boxes, Cpu, Crosshair, Flag, Hammer, Orbit, Radio, RefreshCcw, Rocket, Shield, Swords, Timer, Zap } from 'lucide-react';
+import { construirEnPartida, finalizarPartida, moverFlotasEnPartida, obtenerPartidaPorId } from '../servicios/servicioPartidas';
+import { construirSocket, entrarSalaPartidaSocket, escucharCuentaRegresiva, escucharErrorJuego, escucharEstadoSocket, escucharPartidaActualizada, escucharPartidaFinalizada, escucharPartidaIniciada, finalizarPartidaSocket, moverFlotasSocket, socketEstaConectado } from '../servicios/servicioSocket';
 import { GalaxiaResumen, JugadorResumen, PartidaDetalle, Recursos, RutaResumen, SistemaResumen, TipoConstruccion } from '../tipos/tiposJuego';
 
 interface PropiedadesJuego {
@@ -17,6 +17,7 @@ interface PropiedadesJuego {
   idJugadorActual: string;
   volverSalaEspera: () => void;
   volverAlMenu: () => void;
+  abrirFinPartida: (partida: PartidaDetalle) => void;
 }
 
 interface PosicionSistema {
@@ -292,7 +293,7 @@ function describirCosto(costo: Recursos): string {
     Salidas: Retorna la interfaz principal del juego.
     Objetivo: Mostrar el mapa galactico y permitir construir, mover flotas y ejecutar conquistas.
 */
-export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, volverAlMenu }: PropiedadesJuego) {
+export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, volverAlMenu, abrirFinPartida }: PropiedadesJuego) {
   const [partida, setPartida] = useState<PartidaDetalle | null>(null);
   const [idSistemaSeleccionado, setIdSistemaSeleccionado] = useState('');
   const [idOrigenFlotas, setIdOrigenFlotas] = useState('');
@@ -340,6 +341,11 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
       const datos = await obtenerPartidaPorId(idPartida);
       setPartida(datos);
 
+      if (datos.estado === 'finalizada') {
+        abrirFinPartida(datos);
+        return;
+      }
+
       if (!silencioso) {
         setMensaje('Estado galactico sincronizado con el servidor.');
       }
@@ -366,6 +372,12 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
 
       setPartida(datos);
       setProcesandoAccion(false);
+
+      if (datos.estado === 'finalizada') {
+        abrirFinPartida(datos);
+        return;
+      }
+
       setMensaje('Estado galactico actualizado en tiempo real por WebSocket.');
     });
 
@@ -376,6 +388,16 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
 
       setPartida(datos);
       setMensaje('Partida iniciada desde el servidor. Presione U para habilitar acciones locales.');
+    });
+
+    const cancelarFinalizada = escucharPartidaFinalizada((datos) => {
+      if (datos.id !== idPartida) {
+        return;
+      }
+
+      setPartida(datos);
+      setProcesandoAccion(false);
+      abrirFinPartida(datos);
     });
 
     const cancelarCuenta = escucharCuentaRegresiva((segundos) => {
@@ -394,6 +416,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
       cancelarEstado();
       cancelarActualizacion();
       cancelarInicio();
+      cancelarFinalizada();
       cancelarCuenta();
       cancelarError();
     };
@@ -609,6 +632,38 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
     }
   };
 
+
+  /*
+       finalizarPartidaActual
+      Entradas: No recibe entradas.
+      Salidas: No retorna valor.
+      Objetivo: Cerrar la partida para calcular resultados finales y ranking.
+  */
+  const finalizarPartidaActual = async () => {
+    if (!partida || partida.estado !== 'iniciada') {
+      setMensaje('Solo se puede finalizar una partida iniciada.');
+      return;
+    }
+
+    try {
+      setProcesandoAccion(true);
+      setMensaje('Solicitando finalizacion de partida y calculo de ranking...');
+
+      if (socketEstaConectado()) {
+        finalizarPartidaSocket(idPartida, 'Finalizacion manual solicitada desde la interfaz de juego.');
+        return;
+      }
+
+      const datos = await finalizarPartida(idPartida, 'Finalizacion manual solicitada desde la interfaz de juego.');
+      setPartida(datos);
+      abrirFinPartida(datos);
+    } catch (error: any) {
+      setMensaje(error.message || 'No se pudo finalizar la partida.');
+    } finally {
+      setProcesandoAccion(false);
+    }
+  };
+
   return (
     <section className="vista-juego animacion-entrada">
       <div className="cabecera-juego">
@@ -634,6 +689,10 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
           <button type="button" onClick={prepararInicioOperativo} disabled={juegoHabilitado || cuentaRegresiva !== null || partida?.estado !== 'iniciada'}>
             <Timer size={15} />
             {juegoHabilitado ? 'Operativo' : cuentaRegresiva !== null ? `Inicio ${cuentaRegresiva}` : 'Orden U'}
+          </button>
+          <button type="button" onClick={finalizarPartidaActual} disabled={procesandoAccion || partida?.estado !== 'iniciada'}>
+            <Flag size={15} />
+            Finalizar
           </button>
           <button type="button" onClick={volverAlMenu}>
             <Radio size={15} />

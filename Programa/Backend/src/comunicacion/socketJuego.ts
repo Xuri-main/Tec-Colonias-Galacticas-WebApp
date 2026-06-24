@@ -17,10 +17,18 @@ import { ServicioPartidas } from '../servicios/ServicioPartidas';
 export function configurarSocketJuego(io: Server, servicioPartidas: ServicioPartidas): void {
     servicioPartidas.setAvisarCambio((idPartida: string, estado: object) => {
         io.to(idPartida).emit('partida-actualizada', estado);
+
+        if ((estado as any).estado === 'finalizada') {
+            io.to(idPartida).emit('partida-finalizada', estado);
+        }
     });
 
     servicioPartidas.setAvisarCambioLista(() => {
         io.emit('partidas-actualizadas', servicioPartidas.listarPartidas());
+    });
+
+    servicioPartidas.setAvisarRanking(() => {
+        io.emit('ranking-actualizado');
     });
 
     io.on('connection', (socket: Socket) => {
@@ -75,6 +83,20 @@ export function configurarSocketJuego(io: Server, servicioPartidas: ServicioPart
             try {
                 const partida = servicioPartidas.moverFlotas(datos.idPartida, datos.jugadorId, datos.origenId, datos.destinoId, Number(datos.cantidad));
                 io.to(datos.idPartida).emit('partida-actualizada', partida);
+
+                if ((partida as any).estado === 'finalizada') {
+                    io.to(datos.idPartida).emit('partida-finalizada', partida);
+                }
+            } catch (error: any) {
+                socket.emit('error-juego', { mensaje: error.message });
+            }
+        });
+
+        socket.on('finalizar-partida', (datos: any) => {
+            try {
+                const partida = servicioPartidas.finalizarPartida(datos.idPartida, datos.razon || 'Finalizacion manual solicitada por WebSocket.');
+                io.to(datos.idPartida).emit('partida-actualizada', partida);
+                io.to(datos.idPartida).emit('partida-finalizada', partida);
             } catch (error: any) {
                 socket.emit('error-juego', { mensaje: error.message });
             }

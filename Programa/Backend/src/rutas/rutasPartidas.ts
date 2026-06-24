@@ -24,6 +24,7 @@ export function crearRutasPartidas(controlador: ControladorPartidas): Router {
     rutas.post('/:id/iniciar', controlador.iniciar.bind(controlador));
     rutas.post('/:id/construir', controlador.construir.bind(controlador));
     rutas.post('/:id/mover-flotas', controlador.moverFlotas.bind(controlador));
+    rutas.post('/:id/finalizar', controlador.finalizar.bind(controlador));
 
     return rutas;
 }

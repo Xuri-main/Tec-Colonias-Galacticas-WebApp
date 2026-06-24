@@ -50,7 +50,12 @@ export class ServicioRanking {
             sistemasControlados: ganador.sistemasConquistados,
             recursosAcumulados: ganador.recursosAcumulados,
             galaxia: partida.getGalaxia().getNombre(),
+            tiempoPartida: partida.obtenerTiempoPartidaTexto(),
+            tiempoPartidaSegundos: partida.calcularTiempoJugadoSegundos(),
             identificadorPartida: partida.getId(),
+            idPartida: partida.getId(),
+            puntaje: ganador.puntaje,
+            razonFinalizacion: (partida.obtenerEstadoPublico() as any).razonFinalizacion,
             fechaRegistro: new Date()
         });
     }

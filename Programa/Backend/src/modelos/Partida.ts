@@ -24,6 +24,7 @@ export class Partida {
     private fechaCreacion: Date;
     private fechaInicio: Date | null;
     private fechaFinalizacion: Date | null;
+    private razonFinalizacion: string;
     private eventos: string[];
 
     /*
@@ -44,6 +45,7 @@ export class Partida {
         this.fechaCreacion = new Date();
         this.fechaInicio = null;
         this.fechaFinalizacion = null;
+        this.razonFinalizacion = '';
         this.eventos = [];
     }
 
@@ -85,6 +87,16 @@ export class Partida {
     */
     public getGalaxia(): Galaxia {
         return this.galaxia;
+    }
+
+    /*
+         getTiempoMaximoMinutos
+        Entradas: No recibe entradas.
+        Salidas: Tiempo maximo configurado.
+        Objetivo: Consultar la duracion maxima de la partida.
+    */
+    public getTiempoMaximoMinutos(): number {
+        return this.tiempoMaximoMinutos;
     }
 
     /*
@@ -166,6 +178,7 @@ export class Partida {
         if (this.estado === 'esperando') {
             this.estado = 'cerrada';
             this.fechaFinalizacion = new Date();
+            this.razonFinalizacion = 'La sala expiro antes de iniciar.';
             this.registrarEvento('La partida fue cerrada por tiempo de espera.');
         }
     }
@@ -296,6 +309,10 @@ export class Partida {
             fechaCreacion: this.fechaCreacion,
             fechaInicio: this.fechaInicio,
             fechaFinalizacion: this.fechaFinalizacion,
+            razonFinalizacion: this.razonFinalizacion,
+            tiempoJugadoSegundos: this.calcularTiempoJugadoSegundos(),
+            ganador: this.obtenerGanador(),
+            estadisticasFinales: this.estado === 'finalizada' ? this.calcularEstadisticas() : [],
             eventos: this.eventos.slice(-20)
         };
     }
@@ -352,7 +369,8 @@ export class Partida {
                 flotasEnPie: flotas,
                 minasEnPie: minas,
                 centrosEnPie: centros,
-                fortalezasEnPie: fortalezas
+                fortalezasEnPie: fortalezas,
+                eliminado: jugador.estaEliminado()
             };
         });
 
@@ -368,18 +386,58 @@ export class Partida {
 
     /*
          finalizar
-        Entradas: No recibe entradas.
+        Entradas: Razon de cierre de la partida.
         Salidas: No retorna valor.
         Objetivo: Finalizar la partida manualmente o por una condicion de victoria.
     */
-    public finalizar(): void {
+    public finalizar(razon: string = 'Finalizacion manual de la partida.'): void {
         if (this.estado === 'finalizada') {
             return;
         }
 
         this.estado = 'finalizada';
         this.fechaFinalizacion = new Date();
-        this.registrarEvento('La partida ha finalizado.');
+        this.razonFinalizacion = razon;
+        this.registrarEvento(`La partida ha finalizado. Motivo: ${razon}`);
+    }
+
+    /*
+         obtenerGanador
+        Entradas: No recibe entradas.
+        Salidas: Estadistica del ganador o null.
+        Objetivo: Obtener el primer lugar segun el puntaje calculado.
+    */
+    public obtenerGanador(): object | null {
+        const estadisticas = this.calcularEstadisticas();
+        return estadisticas.length > 0 ? estadisticas[0] : null;
+    }
+
+    /*
+         calcularTiempoJugadoSegundos
+        Entradas: No recibe entradas.
+        Salidas: Tiempo jugado en segundos.
+        Objetivo: Calcular la duracion real de la partida.
+    */
+    public calcularTiempoJugadoSegundos(): number {
+        if (!this.fechaInicio) {
+            return 0;
+        }
+
+        const fechaFin = this.fechaFinalizacion || new Date();
+        return Math.max(0, Math.floor((fechaFin.getTime() - this.fechaInicio.getTime()) / 1000));
+    }
+
+    /*
+         obtenerTiempoPartidaTexto
+        Entradas: No recibe entradas.
+        Salidas: Tiempo de partida en formato legible.
+        Objetivo: Preparar la duracion para ranking y pantallas finales.
+    */
+    public obtenerTiempoPartidaTexto(): string {
+        const segundosTotales = this.calcularTiempoJugadoSegundos();
+        const minutos = Math.floor(segundosTotales / 60);
+        const segundos = segundosTotales % 60;
+        return `${minutos}m ${segundos}s`;
     }
 
     /*
@@ -573,7 +631,7 @@ export class Partida {
             const porcentaje = (controlados / totalSistemas) * 100;
 
             if (porcentaje >= configuracionJuego.porcentajeVictoria) {
-                this.finalizar();
+                this.finalizar(`${jugador.getNickname()} controlo ${controlados} de ${totalSistemas} sistemas planetarios.`);
                 return;
             }
         }
@@ -581,15 +639,17 @@ export class Partida {
         const jugadoresActivos = this.jugadores.filter((jugador) => !jugador.estaEliminado());
 
         if (jugadoresActivos.length <= 1) {
-            this.finalizar();
+            const ganador = jugadoresActivos[0];
+            const textoGanador = ganador ? ganador.getNickname() : 'No hay jugadores activos';
+            this.finalizar(`Solo queda un jugador activo: ${textoGanador}.`);
             return;
         }
 
         if (this.fechaInicio) {
-            const minutosJugados = (Date.now() - this.fechaInicio.getTime()) / 60000;
+            const minutosJugados = this.calcularTiempoJugadoSegundos() / 60;
 
             if (minutosJugados >= this.tiempoMaximoMinutos) {
-                this.finalizar();
+                this.finalizar('Se alcanzo el tiempo maximo configurado para la partida.');
             }
         }
     }

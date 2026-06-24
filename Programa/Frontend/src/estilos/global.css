@@ -2766,7 +2766,6 @@ button:focus {
     grid-row: auto;
   }
 }
-<<<<<<< HEAD
 
 .estado-socket {
   display: inline-flex;
@@ -2804,5 +2803,315 @@ button:focus {
   background: var(--cyan);
   box-shadow: 0 0 8px rgba(0, 229, 255, 0.72);
 }
-=======
->>>>>>> ba1bebe215d71b3b8d51e51912d63b45c163bd42
+
+.vista-fin-partida,
+.vista-ranking-completa {
+  width: min(1180px, calc(100vw - 48px));
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cabecera-fin-partida,
+.cabecera-ranking-completa {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+  padding: 22px;
+  border: 1px solid rgba(0, 229, 255, 0.16);
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(13, 21, 48, 0.92), rgba(10, 15, 31, 0.96));
+  box-shadow: 0 0 34px rgba(0, 229, 255, 0.055);
+}
+
+.cabecera-fin-partida h2,
+.cabecera-ranking-completa h2 {
+  margin: 6px 0 8px;
+  color: var(--texto-principal);
+  font-family: var(--fuente-titulo);
+  font-size: clamp(1.8rem, 3.4vw, 3rem);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.cabecera-fin-partida p,
+.cabecera-ranking-completa p {
+  margin: 0;
+  color: var(--texto-secundario);
+  max-width: 680px;
+  line-height: 1.55;
+}
+
+.resumen-final-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) 1.4fr;
+  gap: 18px;
+}
+
+.panel-ganador-final,
+.panel-datos-finales,
+.panel-tabla-final,
+.panel-desglose-ganador,
+.panel-tabla-ranking,
+.tarjeta-ranking-destacada {
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(13, 21, 48, 0.9), rgba(10, 15, 31, 0.96));
+  box-shadow: inset 0 0 28px rgba(0, 229, 255, 0.025);
+}
+
+.panel-ganador-final {
+  padding: 26px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 260px;
+  border-color: rgba(255, 200, 87, 0.22);
+}
+
+.halo-ganador-final {
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 200, 87, 0.32);
+  color: var(--ambar);
+  background: radial-gradient(circle, rgba(255, 200, 87, 0.15), rgba(255, 200, 87, 0.02));
+  box-shadow: 0 0 42px rgba(255, 200, 87, 0.14);
+}
+
+.panel-ganador-final span,
+.panel-ganador-final p {
+  color: var(--texto-secundario);
+}
+
+.panel-ganador-final h3 {
+  margin: 16px 0 4px;
+  color: var(--texto-principal);
+  font-family: var(--fuente-titulo);
+  font-size: 1.7rem;
+  text-transform: uppercase;
+}
+
+.panel-ganador-final strong {
+  color: var(--cyan);
+  font-family: var(--fuente-mono);
+}
+
+.panel-datos-finales {
+  padding: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dato-final,
+.panel-desglose-ganador div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid rgba(0, 229, 255, 0.09);
+  border-radius: 4px;
+  background: rgba(0, 229, 255, 0.035);
+}
+
+.dato-final svg,
+.panel-desglose-ganador svg {
+  color: var(--cyan);
+}
+
+.dato-final span,
+.panel-desglose-ganador span {
+  color: var(--texto-secundario);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.dato-final strong,
+.panel-desglose-ganador strong {
+  color: var(--texto-principal);
+  font-family: var(--fuente-mono);
+  word-break: break-word;
+}
+
+.panel-tabla-final,
+.panel-tabla-ranking {
+  padding: 18px;
+  overflow-x: auto;
+}
+
+.tabla-final-jugadores,
+.panel-tabla-ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fila-final,
+.fila-ranking-completa {
+  min-width: 900px;
+  display: grid;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid rgba(0, 229, 255, 0.08);
+  border-radius: 4px;
+  background: rgba(10, 15, 31, 0.56);
+  color: var(--texto-secundario);
+  font-size: 0.86rem;
+}
+
+.fila-final {
+  grid-template-columns: 48px 1.4fr 0.9fr 0.7fr 0.8fr 0.7fr 0.6fr 0.7fr 0.8fr;
+}
+
+.fila-ranking-completa {
+  grid-template-columns: 48px 1.35fr 0.85fr 0.7fr 1.25fr 1fr 0.75fr 1fr;
+}
+
+.encabezado-final,
+.encabezado-ranking {
+  color: var(--cyan);
+  font-family: var(--fuente-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(0, 229, 255, 0.045);
+}
+
+.fila-final strong,
+.fila-ranking-completa strong,
+.posicion-final {
+  color: var(--texto-principal);
+  font-family: var(--fuente-mono);
+}
+
+.nombre-final {
+  color: var(--texto-principal);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.nombre-final svg {
+  color: var(--ambar);
+}
+
+.recursos-final-mini,
+.ranking-recursos {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.recursos-final-mini svg,
+.ranking-recursos svg {
+  color: var(--cyan);
+}
+
+.panel-desglose-ganador {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.acciones-final-partida,
+.acciones-ranking {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.boton-principal {
+  border-color: rgba(0, 229, 255, 0.35);
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.18), rgba(255, 45, 149, 0.08));
+  color: var(--texto-principal);
+}
+
+.ranking-destacado-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.tarjeta-ranking-destacada {
+  padding: 18px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.tarjeta-ranking-destacada span {
+  color: var(--ambar);
+  font-family: var(--fuente-mono);
+  font-weight: 700;
+}
+
+.tarjeta-ranking-destacada svg {
+  color: var(--ambar);
+}
+
+.tarjeta-ranking-destacada h3 {
+  margin: 4px 0 0;
+  color: var(--texto-principal);
+  font-family: var(--fuente-titulo);
+  text-transform: uppercase;
+}
+
+.tarjeta-ranking-destacada strong {
+  color: var(--cyan);
+  font-family: var(--fuente-mono);
+}
+
+.tarjeta-ranking-destacada p {
+  margin: 0;
+  color: var(--texto-secundario);
+}
+
+.estado-ranking-vacio {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 28px;
+  text-align: center;
+  color: var(--texto-secundario);
+}
+
+.estado-ranking-vacio svg {
+  color: var(--cyan);
+}
+
+.estado-ranking-vacio strong {
+  color: var(--texto-principal);
+  font-family: var(--fuente-titulo);
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .resumen-final-grid,
+  .panel-datos-finales,
+  .panel-desglose-ganador,
+  .ranking-destacado-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cabecera-fin-partida,
+  .cabecera-ranking-completa {
+    flex-direction: column;
+  }
+}

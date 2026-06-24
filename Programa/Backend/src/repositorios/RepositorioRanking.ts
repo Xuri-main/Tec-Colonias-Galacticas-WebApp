@@ -33,17 +33,42 @@ export class RepositorioRanking {
         }
 
         const contenido = fs.readFileSync(this.rutaRanking, 'utf-8');
-        return JSON.parse(contenido) as object[];
+
+        if (!contenido.trim()) {
+            return [];
+        }
+
+        const ranking = JSON.parse(contenido) as any[];
+
+        ranking.sort((a: any, b: any) => {
+            const puntajeA = Number(a.puntaje || 0);
+            const puntajeB = Number(b.puntaje || 0);
+
+            if (puntajeB !== puntajeA) {
+                return puntajeB - puntajeA;
+            }
+
+            return new Date(b.fechaRegistro || 0).getTime() - new Date(a.fechaRegistro || 0).getTime();
+        });
+
+        return ranking;
     }
 
     /*
          guardarRegistro
         Entradas: Registro de ranking.
         Salidas: No retorna valor.
-        Objetivo: Agregar un resultado final al ranking historico.
+        Objetivo: Agregar un resultado final al ranking historico evitando duplicados por partida.
     */
     public guardarRegistro(registro: object): void {
-        const ranking = this.listar();
+        const ranking = this.listar() as any[];
+        const idPartida = (registro as any).idPartida || (registro as any).identificadorPartida;
+        const existe = ranking.some((actual: any) => actual.idPartida === idPartida || actual.identificadorPartida === idPartida);
+
+        if (existe) {
+            return;
+        }
+
         ranking.push(registro);
         fs.writeFileSync(this.rutaRanking, JSON.stringify(ranking, null, 2), 'utf-8');
     }

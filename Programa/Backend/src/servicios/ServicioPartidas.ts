@@ -14,11 +14,13 @@ import { ServicioRanking } from './ServicioRanking';
 export class ServicioPartidas {
     private partidas: Map<string, Partida>;
     private ciclosRecursos: Map<string, NodeJS.Timeout>;
+    private ciclosFinalizacion: Map<string, NodeJS.Timeout>;
     private servicioGalaxias: ServicioGalaxias;
     private servicioRanking: ServicioRanking;
     private partidasGuardadasRanking: Set<string>;
     private avisarCambio: ((idPartida: string, estado: object) => void) | null;
     private avisarCambioLista: (() => void) | null;
+    private avisarRanking: (() => void) | null;
 
     /*
          constructor
@@ -29,13 +31,14 @@ export class ServicioPartidas {
     constructor(servicioGalaxias: ServicioGalaxias, servicioRanking: ServicioRanking) {
         this.partidas = new Map<string, Partida>();
         this.ciclosRecursos = new Map<string, NodeJS.Timeout>();
+        this.ciclosFinalizacion = new Map<string, NodeJS.Timeout>();
         this.servicioGalaxias = servicioGalaxias;
         this.servicioRanking = servicioRanking;
         this.partidasGuardadasRanking = new Set<string>();
         this.avisarCambio = null;
         this.avisarCambioLista = null;
+        this.avisarRanking = null;
     }
-
 
     /*
          setAvisarCambio
@@ -55,6 +58,16 @@ export class ServicioPartidas {
     */
     public setAvisarCambioLista(avisarCambioLista: () => void): void {
         this.avisarCambioLista = avisarCambioLista;
+    }
+
+    /*
+         setAvisarRanking
+        Entradas: Funcion sin parametros.
+        Salidas: No retorna valor.
+        Objetivo: Registrar una funcion para avisar que el ranking historico cambio.
+    */
+    public setAvisarRanking(avisarRanking: () => void): void {
+        this.avisarRanking = avisarRanking;
     }
 
     /*
@@ -104,6 +117,7 @@ export class ServicioPartidas {
             throw new Error('Partida no encontrada.');
         }
 
+        this.revisarFinalizacionPorTiempo(partida);
         return partida;
     }
 
@@ -131,6 +145,7 @@ export class ServicioPartidas {
         const partida = this.obtenerPartida(idPartida);
         partida.iniciar();
         this.iniciarCicloRecursos(partida);
+        this.programarFinalizacionPorTiempo(partida);
         this.notificarCambioLista();
         this.notificarCambioPartida(partida);
         return partida.obtenerEstadoPublico();
@@ -145,7 +160,7 @@ export class ServicioPartidas {
     public construir(idPartida: string, jugadorId: string, sistemaId: string, tipoConstruccion: TipoConstruccion): object {
         const partida = this.obtenerPartida(idPartida);
         partida.construir(jugadorId, sistemaId, tipoConstruccion);
-        this.guardarRankingSiFinalizo(partida);
+        this.procesarFinalizacionSiExiste(partida);
         this.notificarCambioPartida(partida);
         this.notificarCambioLista();
         return partida.obtenerEstadoPublico();
@@ -160,7 +175,22 @@ export class ServicioPartidas {
     public moverFlotas(idPartida: string, jugadorId: string, origenId: string, destinoId: string, cantidad: number): object {
         const partida = this.obtenerPartida(idPartida);
         partida.moverFlotas(jugadorId, origenId, destinoId, cantidad);
-        this.guardarRankingSiFinalizo(partida);
+        this.procesarFinalizacionSiExiste(partida);
+        this.notificarCambioPartida(partida);
+        this.notificarCambioLista();
+        return partida.obtenerEstadoPublico();
+    }
+
+    /*
+         finalizarPartida
+        Entradas: Id de partida y razon de finalizacion.
+        Salidas: Estado publico actualizado de la partida.
+        Objetivo: Finalizar una partida desde una accion de prueba o administracion.
+    */
+    public finalizarPartida(idPartida: string, razon: string = 'Finalizacion manual solicitada desde la interfaz.'): object {
+        const partida = this.obtenerPartida(idPartida);
+        partida.finalizar(razon);
+        this.procesarFinalizacionSiExiste(partida);
         this.notificarCambioPartida(partida);
         this.notificarCambioLista();
         return partida.obtenerEstadoPublico();
@@ -187,6 +217,18 @@ export class ServicioPartidas {
     private notificarCambioLista(): void {
         if (this.avisarCambioLista) {
             this.avisarCambioLista();
+        }
+    }
+
+    /*
+         notificarRanking
+        Entradas: No recibe entradas.
+        Salidas: No retorna valor.
+        Objetivo: Avisar a los clientes conectados que el ranking cambio.
+    */
+    private notificarRanking(): void {
+        if (this.avisarRanking) {
+            this.avisarRanking();
         }
     }
 
@@ -249,17 +291,84 @@ export class ServicioPartidas {
 
         const ciclo = setInterval(() => {
             partida.producirRecursos();
-
+            this.procesarFinalizacionSiExiste(partida);
             this.notificarCambioPartida(partida);
-
-            if (partida.getEstado() === 'finalizada') {
-                clearInterval(ciclo);
-                this.ciclosRecursos.delete(partida.getId());
-                this.guardarRankingSiFinalizo(partida);
-            }
+            this.notificarCambioLista();
         }, configuracionJuego.segundosCicloRecursos * 1000);
 
         this.ciclosRecursos.set(partida.getId(), ciclo);
+    }
+
+    /*
+         programarFinalizacionPorTiempo
+        Entradas: Partida iniciada.
+        Salidas: No retorna valor.
+        Objetivo: Crear un temporizador para finalizar la partida cuando se cumpla el tiempo maximo.
+    */
+    private programarFinalizacionPorTiempo(partida: Partida): void {
+        if (this.ciclosFinalizacion.has(partida.getId())) {
+            return;
+        }
+
+        const milisegundos = partida.getTiempoMaximoMinutos() * 60 * 1000;
+
+        const temporizador = setTimeout(() => {
+            if (partida.getEstado() === 'iniciada') {
+                partida.finalizar('Se alcanzo el tiempo maximo configurado para la partida.');
+                this.procesarFinalizacionSiExiste(partida);
+                this.notificarCambioPartida(partida);
+                this.notificarCambioLista();
+            }
+        }, milisegundos);
+
+        this.ciclosFinalizacion.set(partida.getId(), temporizador);
+    }
+
+    /*
+         revisarFinalizacionPorTiempo
+        Entradas: Partida consultada.
+        Salidas: No retorna valor.
+        Objetivo: Finalizar una partida si fue consultada despues de vencer su tiempo maximo.
+    */
+    private revisarFinalizacionPorTiempo(partida: Partida): void {
+        if (partida.getEstado() !== 'iniciada') {
+            return;
+        }
+
+        const segundos = partida.calcularTiempoJugadoSegundos();
+
+        if (segundos >= partida.getTiempoMaximoMinutos() * 60) {
+            partida.finalizar('Se alcanzo el tiempo maximo configurado para la partida.');
+            this.procesarFinalizacionSiExiste(partida);
+        }
+    }
+
+    /*
+         procesarFinalizacionSiExiste
+        Entradas: Partida a revisar.
+        Salidas: No retorna valor.
+        Objetivo: Detener ciclos y guardar ranking cuando una partida finaliza.
+    */
+    private procesarFinalizacionSiExiste(partida: Partida): void {
+        if (partida.getEstado() !== 'finalizada') {
+            return;
+        }
+
+        const cicloRecursos = this.ciclosRecursos.get(partida.getId());
+
+        if (cicloRecursos) {
+            clearInterval(cicloRecursos);
+            this.ciclosRecursos.delete(partida.getId());
+        }
+
+        const cicloFinalizacion = this.ciclosFinalizacion.get(partida.getId());
+
+        if (cicloFinalizacion) {
+            clearTimeout(cicloFinalizacion);
+            this.ciclosFinalizacion.delete(partida.getId());
+        }
+
+        this.guardarRankingSiFinalizo(partida);
     }
 
     /*
@@ -272,6 +381,7 @@ export class ServicioPartidas {
         if (partida.getEstado() === 'finalizada' && !this.partidasGuardadasRanking.has(partida.getId())) {
             this.servicioRanking.guardarResultadoPartida(partida);
             this.partidasGuardadasRanking.add(partida.getId());
+            this.notificarRanking();
         }
     }
 }

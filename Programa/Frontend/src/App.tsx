@@ -15,7 +15,8 @@ import { UnirsePartida } from './paginas/UnirsePartida';
 import { SalaEspera } from './paginas/SalaEspera';
 import { Juego } from './paginas/Juego';
 import { Ranking } from './paginas/Ranking';
-import { VistaAplicacion } from './tipos/tiposJuego';
+import { FinPartida } from './paginas/FinPartida';
+import { PartidaDetalle, VistaAplicacion } from './tipos/tiposJuego';
 import { conectarSocket } from './servicios/servicioSocket';
 
 /*
@@ -29,6 +30,7 @@ export default function App() {
   const [vistaActual, setVistaActual] = useState<VistaAplicacion>('menu');
   const [idPartidaActiva, setIdPartidaActiva] = useState('');
   const [idJugadorActual, setIdJugadorActual] = useState('');
+  const [partidaFinalizada, setPartidaFinalizada] = useState<PartidaDetalle | null>(null);
 
   useEffect(() => {
     conectarSocket();
@@ -68,6 +70,17 @@ export default function App() {
   */
   const abrirJuego = () => {
     setVistaActual('juego');
+  };
+
+  /*
+       abrirFinPartida
+      Entradas: Partida finalizada.
+      Salidas: No retorna valor.
+      Objetivo: Guardar los resultados finales y mostrar la pantalla de cierre.
+  */
+  const abrirFinPartida = (partida: PartidaDetalle) => {
+    setPartidaFinalizada(partida);
+    setVistaActual('fin-partida');
   };
 
   return (
@@ -118,6 +131,17 @@ export default function App() {
               idJugadorActual={idJugadorActual}
               volverSalaEspera={() => setVistaActual('sala-espera')}
               volverAlMenu={volverAlMenu}
+              abrirFinPartida={abrirFinPartida}
+            />
+          )}
+
+
+
+          {vistaActual === 'fin-partida' && (
+            <FinPartida
+              partida={partidaFinalizada}
+              volverAlMenu={volverAlMenu}
+              abrirRanking={() => setVistaActual('ranking')}
             />
           )}
 

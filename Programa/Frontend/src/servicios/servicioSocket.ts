@@ -259,3 +259,45 @@ export function construirSocket(idPartida: string, jugadorId: string, sistemaId:
 export function moverFlotasSocket(idPartida: string, jugadorId: string, origenId: string, destinoId: string, cantidad: number): void {
   conectarSocket().emit('mover-flotas', { idPartida, jugadorId, origenId, destinoId, cantidad });
 }
+
+/*
+     escucharPartidaFinalizada
+    Entradas: Funcion que recibe la partida finalizada.
+    Salidas: Funcion para cancelar la escucha.
+    Objetivo: Enviar a la interfaz final cuando el servidor cierre la partida.
+*/
+export function escucharPartidaFinalizada(callback: FuncionPartida): FuncionSinParametros {
+  const socket = conectarSocket();
+
+  socket.on('partida-finalizada', callback);
+
+  return () => {
+    socket.off('partida-finalizada', callback);
+  };
+}
+
+/*
+     escucharRankingActualizado
+    Entradas: Funcion sin parametros.
+    Salidas: Funcion para cancelar la escucha.
+    Objetivo: Actualizar vistas cuando el servidor guarda un nuevo resultado de ranking.
+*/
+export function escucharRankingActualizado(callback: FuncionSinParametros): FuncionSinParametros {
+  const socket = conectarSocket();
+
+  socket.on('ranking-actualizado', callback);
+
+  return () => {
+    socket.off('ranking-actualizado', callback);
+  };
+}
+
+/*
+     finalizarPartidaSocket
+    Entradas: Identificador de partida y razon.
+    Salidas: No retorna valor.
+    Objetivo: Solicitar al servidor la finalizacion de la partida por WebSocket.
+*/
+export function finalizarPartidaSocket(idPartida: string, razon: string): void {
+  conectarSocket().emit('finalizar-partida', { idPartida, razon });
+}
