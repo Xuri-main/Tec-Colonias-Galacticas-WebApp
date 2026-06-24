@@ -3115,3 +3115,64 @@ button:focus {
     flex-direction: column;
   }
 }
+
+.franja-inferior-juego {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+  height: 320px;
+  min-height: 320px;
+  max-height: 320px;
+}
+
+.panel-acciones-juego,
+.panel-eventos-juego {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.panel-eventos-juego {
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-eventos-juego .titulo-panel-juego {
+  flex: 0 0 auto;
+}
+
+.lista-eventos-juego {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 6px;
+}
+
+.item-evento-juego {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 1100px) {
+  .franja-inferior-juego {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .panel-acciones-juego,
+  .panel-eventos-juego {
+    min-height: 280px;
+  }
+
+  .lista-eventos-juego {
+    max-height: 260px;
+  }
+}

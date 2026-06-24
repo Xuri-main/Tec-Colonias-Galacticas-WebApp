@@ -5,7 +5,7 @@
     Fecha: 21/06/2026
 */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Boxes, Cpu, Crosshair, Flag, Hammer, Orbit, Radio, RefreshCcw, Rocket, Shield, Swords, Timer, Zap } from 'lucide-react';
 import { construirEnPartida, finalizarPartida, moverFlotasEnPartida, obtenerPartidaPorId } from '../servicios/servicioPartidas';
 import { construirSocket, entrarSalaPartidaSocket, escucharCuentaRegresiva, escucharErrorJuego, escucharEstadoSocket, escucharPartidaActualizada, escucharPartidaFinalizada, escucharPartidaIniciada, finalizarPartidaSocket, moverFlotasSocket, socketEstaConectado } from '../servicios/servicioSocket';
@@ -87,7 +87,7 @@ const listaConstrucciones: TipoConstruccion[] = ['mina', 'centroInvestigacion', 
      obtenerNombreGalaxia
     Entradas: Partida detallada o valor nulo.
     Salidas: Nombre de la galaxia.
-    Objetivo: Mostrar el nombre de la galaxia aunque el backend envie texto u objeto.
+    Objetivo: Mostrar el nombre de la galaxia aunque la partida envie texto u objeto.
 */
 function obtenerNombreGalaxia(partida: PartidaDetalle | null): string {
   if (!partida) {
@@ -133,7 +133,7 @@ function obtenerRutas(partida: PartidaDetalle | null): RutaResumen[] {
      obtenerExtremosRuta
     Entradas: Ruta espacial resumida.
     Salidas: Identificadores de origen y destino.
-    Objetivo: Soportar diferentes nombres de campos que podria enviar el backend.
+    Objetivo: Soportar diferentes nombres de campos que podria traer la ruta.
 */
 function obtenerExtremosRuta(ruta: RutaResumen): { origen: string; destino: string } {
   return {
@@ -253,7 +253,7 @@ function esSistemaPropio(sistema: SistemaResumen | null | undefined, jugadorActu
      existeRutaDirecta
     Entradas: Rutas, id de origen e id de destino.
     Salidas: Verdadero si ambos sistemas estan conectados directamente.
-    Objetivo: Validar movimientos antes de enviarlos al backend.
+    Objetivo: Validar movimientos antes de procesarlos.
 */
 function existeRutaDirecta(rutas: RutaResumen[], origenId: string, destinoId: string): boolean {
   if (!origenId || !destinoId) {
@@ -305,6 +305,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
   const [juegoHabilitado, setJuegoHabilitado] = useState(false);
   const [cuentaRegresiva, setCuentaRegresiva] = useState<number | null>(null);
   const [socketConectado, setSocketConectado] = useState(false);
+  const referenciaBitacora = useRef<HTMLDivElement | null>(null);
 
   const sistemas = useMemo(() => obtenerSistemas(partida), [partida]);
   const rutas = useMemo(() => obtenerRutas(partida), [partida]);
@@ -320,6 +321,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
   const rutaValida = existeRutaDirecta(rutas, idOrigenFlotas, idDestinoFlotas);
   const cantidadDisponible = origenFlotas?.flotas || 0;
   const accionesBloqueadas = !juegoHabilitado || partida?.estado !== 'iniciada' || procesandoAccion;
+  const eventosBitacora = useMemo(() => (partida?.eventos || []).slice(-60), [partida?.eventos]);
 
   /*
        cargarPartida
@@ -347,7 +349,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
       }
 
       if (!silencioso) {
-        setMensaje('Estado galactico sincronizado con el servidor.');
+        setMensaje('Mapa tactico actualizado. Las flotas esperan nuevas ordenes.');
       }
 
       const listaSistemas = obtenerSistemas(datos);
@@ -378,7 +380,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
         return;
       }
 
-      setMensaje('Estado galactico actualizado en tiempo real por WebSocket.');
+      setMensaje('Nuevos reportes del frente recibidos. El mapa tactico fue actualizado.');
     });
 
     const cancelarInicio = escucharPartidaIniciada((datos) => {
@@ -387,7 +389,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
       }
 
       setPartida(datos);
-      setMensaje('Partida iniciada desde el servidor. Presione U para habilitar acciones locales.');
+      setMensaje('La sala autorizo el despliegue. Presione U para tomar control del frente.');
     });
 
     const cancelarFinalizada = escucharPartidaFinalizada((datos) => {
@@ -401,7 +403,16 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
     });
 
     const cancelarCuenta = escucharCuentaRegresiva((segundos) => {
-      setMensaje(`Cuenta regresiva recibida del servidor: ${segundos} segundos.`);
+      if (segundos > 0) {
+        setCuentaRegresiva(segundos);
+        setJuegoHabilitado(false);
+        setMensaje(`El alto mando inicia despliegue en ${segundos} segundos.`);
+        return;
+      }
+
+      setCuentaRegresiva(null);
+      setJuegoHabilitado(true);
+      setMensaje('Despliegue completado. El mando tactico queda en linea.');
     });
 
     const cancelarError = escucharErrorJuego((texto) => {
@@ -434,6 +445,17 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
   }, [partida, juegoHabilitado, cuentaRegresiva]);
 
   useEffect(() => {
+    if (!referenciaBitacora.current) {
+      return;
+    }
+
+    referenciaBitacora.current.scrollTo({
+      top: referenciaBitacora.current.scrollHeight,
+      behavior: 'smooth'
+    });
+  }, [eventosBitacora.length]);
+
+  useEffect(() => {
     if (cuentaRegresiva === null) {
       return;
     }
@@ -441,7 +463,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
     if (cuentaRegresiva <= 0) {
       setCuentaRegresiva(null);
       setJuegoHabilitado(true);
-      setMensaje('Cuenta regresiva finalizada. Operaciones tacticas habilitadas.');
+      setMensaje('Despliegue completado. El mando tactico queda en linea.');
       return;
     }
 
@@ -464,12 +486,12 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
     }
 
     if (partida?.estado !== 'iniciada') {
-      setMensaje('La partida todavia no esta iniciada desde la sala de espera.');
+      setMensaje('La sala aun no ha autorizado el despliegue de la partida.');
       return;
     }
 
     setCuentaRegresiva(3);
-    setMensaje('Orden U recibida. Iniciando cuenta regresiva operativa.');
+    setMensaje('Clave U aceptada. Preparando salto tactico.');
   };
 
   /*
@@ -486,28 +508,28 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
        construir
       Entradas: Tipo de construccion solicitado.
       Salidas: No retorna valor.
-      Objetivo: Enviar al backend una orden de construccion validando datos basicos en interfaz.
+      Objetivo: Enviar una orden de construccion validando datos basicos en interfaz.
   */
   const construir = async (tipoConstruccion: TipoConstruccion) => {
     if (accionesBloqueadas) {
-      setMensaje('Debe presionar U y esperar la cuenta regresiva antes de ejecutar acciones.');
+      setMensaje('Debe activar el mando con U antes de ejecutar ordenes tacticas.');
       return;
     }
 
     if (!jugadorActual) {
-      setMensaje('No se encontro el jugador actual en la partida.');
+      setMensaje('No fue posible reconocer al comandante en esta partida.');
       return;
     }
 
     if (!sistemaSeleccionado || !sistemaSeleccionadoPropio) {
-      setMensaje('Seleccione un sistema propio para construir.');
+      setMensaje('Seleccione una colonia bajo su control para construir.');
       return;
     }
 
     const costo = costosConstruccion[tipoConstruccion];
 
     if (!puedePagar(jugadorActual.recursos, costo)) {
-      setMensaje('Recursos insuficientes para ejecutar esta construccion.');
+      setMensaje('Reservas insuficientes para completar esta construccion.');
       return;
     }
 
@@ -538,7 +560,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
   */
   const fijarOrigenFlotas = () => {
     if (!sistemaSeleccionado || !esSistemaPropio(sistemaSeleccionado, jugadorActual)) {
-      setMensaje('El origen debe ser un sistema controlado por su comandante.');
+      setMensaje('El origen debe ser una colonia bajo su control.');
       return;
     }
 
@@ -555,12 +577,12 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
   */
   const fijarDestinoFlotas = () => {
     if (!sistemaSeleccionado) {
-      setMensaje('Seleccione un sistema del mapa para usarlo como destino.');
+      setMensaje('Seleccione un sistema del mapa para marcar el destino.');
       return;
     }
 
     if (sistemaSeleccionado.id === idOrigenFlotas) {
-      setMensaje('El destino debe ser diferente al origen.');
+      setMensaje('El destino debe ser distinto al punto de partida.');
       return;
     }
 
@@ -572,42 +594,42 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
        moverFlotas
       Entradas: No recibe entradas.
       Salidas: No retorna valor.
-      Objetivo: Enviar al backend una orden de movimiento o conquista.
+      Objetivo: Enviar una orden de movimiento o conquista.
   */
   const moverFlotas = async () => {
     if (accionesBloqueadas) {
-      setMensaje('Debe presionar U y esperar la cuenta regresiva antes de mover flotas.');
+      setMensaje('Debe activar el mando con U antes de desplegar flotas.');
       return;
     }
 
     if (!jugadorActual) {
-      setMensaje('No se encontro el jugador actual en la partida.');
+      setMensaje('No fue posible reconocer al comandante en esta partida.');
       return;
     }
 
     if (!idOrigenFlotas || !idDestinoFlotas) {
-      setMensaje('Debe seleccionar origen y destino para mover flotas.');
+      setMensaje('Defina un origen y un destino antes de desplegar flotas.');
       return;
     }
 
     if (!origenValido) {
-      setMensaje('El origen elegido no pertenece a su comandante.');
+      setMensaje('El origen elegido no esta bajo su control.');
       return;
     }
 
     if (!rutaValida) {
-      setMensaje('El origen y el destino no estan conectados directamente.');
+      setMensaje('No existe una ruta directa entre el origen y el destino.');
       return;
     }
 
     if (cantidadFlotas <= 0 || cantidadFlotas > cantidadDisponible) {
-      setMensaje('La cantidad de flotas debe ser mayor a cero y no puede superar las flotas disponibles.');
+      setMensaje('La cantidad indicada debe ser mayor a cero y no puede superar las flotas disponibles.');
       return;
     }
 
     try {
       setProcesandoAccion(true);
-      setMensaje('Enviando orden de movimiento de flotas al servidor...');
+      setMensaje('Transmitiendo orden de avance a la flota seleccionada...');
 
       if (socketEstaConectado()) {
         moverFlotasSocket(idPartida, jugadorActual.id, idOrigenFlotas, idDestinoFlotas, cantidadFlotas);
@@ -624,7 +646,7 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
       setIdOrigenFlotas('');
       setIdDestinoFlotas('');
       setCantidadFlotas(1);
-      setMensaje('Movimiento de flotas procesado correctamente. Revise los eventos recientes.');
+      setMensaje('Flotas desplegadas. Revise la bitacora de guerra para conocer el resultado.');
     } catch (error: any) {
       setMensaje(error.message || 'No se pudo mover las flotas.');
     } finally {
@@ -641,24 +663,24 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
   */
   const finalizarPartidaActual = async () => {
     if (!partida || partida.estado !== 'iniciada') {
-      setMensaje('Solo se puede finalizar una partida iniciada.');
+      setMensaje('Solo una batalla activa puede cerrarse.');
       return;
     }
 
     try {
       setProcesandoAccion(true);
-      setMensaje('Solicitando finalizacion de partida y calculo de ranking...');
+      setMensaje('Cerrando batalla y calculando honores de guerra...');
 
       if (socketEstaConectado()) {
-        finalizarPartidaSocket(idPartida, 'Finalizacion manual solicitada desde la interfaz de juego.');
+        finalizarPartidaSocket(idPartida, 'Cierre de batalla solicitado desde el campo galactico.');
         return;
       }
 
-      const datos = await finalizarPartida(idPartida, 'Finalizacion manual solicitada desde la interfaz de juego.');
+      const datos = await finalizarPartida(idPartida, 'Cierre de batalla solicitado desde el campo galactico.');
       setPartida(datos);
       abrirFinPartida(datos);
     } catch (error: any) {
-      setMensaje(error.message || 'No se pudo finalizar la partida.');
+      setMensaje(error.message || 'No fue posible cerrar la batalla.');
     } finally {
       setProcesandoAccion(false);
     }
@@ -676,23 +698,23 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
           <h2>{obtenerNombreGalaxia(partida)}</h2>
           <p>
             Comandante <strong>{nickname || 'sin identificar'}</strong>, administre recursos, construcciones y flotas
-            desde esta consola tactica sincronizada con el servidor.
+            desde el puente de mando orbital.
           </p>
         </div>
 
         <div className="acciones-cabecera-juego">
-          <span className={socketConectado ? 'estado-socket conectado' : 'estado-socket'}>{socketConectado ? 'WS conectado' : 'WS desconectado'}</span>
+          <span className={socketConectado ? 'estado-socket conectado' : 'estado-socket'}>{socketConectado ? 'Enlace activo' : 'Enlace en espera'}</span>
           <button type="button" onClick={() => cargarPartida()} disabled={cargando || procesandoAccion}>
             <RefreshCcw size={15} />
-            {cargando ? 'Sincronizando' : 'Sincronizar'}
+            {cargando ? 'Escaneando' : 'Escanear'}
           </button>
           <button type="button" onClick={prepararInicioOperativo} disabled={juegoHabilitado || cuentaRegresiva !== null || partida?.estado !== 'iniciada'}>
             <Timer size={15} />
-            {juegoHabilitado ? 'Operativo' : cuentaRegresiva !== null ? `Inicio ${cuentaRegresiva}` : 'Orden U'}
+            {juegoHabilitado ? 'Mando activo' : cuentaRegresiva !== null ? `Despliegue ${cuentaRegresiva}` : 'Activar mando'}
           </button>
           <button type="button" onClick={finalizarPartidaActual} disabled={procesandoAccion || partida?.estado !== 'iniciada'}>
             <Flag size={15} />
-            Finalizar
+            Cerrar batalla
           </button>
           <button type="button" onClick={volverAlMenu}>
             <Radio size={15} />
@@ -707,12 +729,12 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
         <Timer size={17} />
         <div>
           <strong>
-            {juegoHabilitado ? 'Operaciones habilitadas' : cuentaRegresiva !== null ? `Cuenta regresiva: ${cuentaRegresiva}` : 'Esperando tecla U'}
+            {juegoHabilitado ? 'Mando tactico en linea' : cuentaRegresiva !== null ? `Despliegue en ${cuentaRegresiva}` : 'Mando en espera'}
           </strong>
           <span>
             {juegoHabilitado
-              ? 'Las ordenes de construccion, movimiento y conquista ya pueden enviarse al backend.'
-              : 'Antes de ejecutar acciones tacticas, presione U para confirmar el inicio operativo de esta interfaz.'}
+              ? 'Las colonias, astilleros y flotas quedan listas para recibir nuevas ordenes.'
+              : 'Presione U para confirmar el despliegue y tomar control del campo galactico.'}
           </span>
         </div>
       </div>
@@ -758,17 +780,17 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
               <strong>{partida?.estado || 'cargando'}</strong>
             </div>
             <div>
-              <span>Operacion local</span>
-              <strong>{juegoHabilitado ? 'Activa' : 'Bloqueada'}</strong>
+              <span>Protocolo tactico</span>
+              <strong>{juegoHabilitado ? 'Activo' : 'En espera'}</strong>
             </div>
           </div>
 
           <div className={juegoHabilitado ? 'aviso-tecla-u activo' : 'aviso-tecla-u'}>
             <Timer size={17} />
             <div>
-              <strong>{juegoHabilitado ? 'Orden U completada' : 'Presione U para activar'}</strong>
+              <strong>{juegoHabilitado ? 'Mando confirmado' : 'Esperando clave U'}</strong>
               <span>
-                Esta proteccion evita enviar acciones desde la interfaz antes de que el jugador confirme el arranque.
+                El puente de mando espera confirmacion antes de desplegar construcciones y flotas.
               </span>
             </div>
           </div>
@@ -976,14 +998,19 @@ export function Juego({ nickname, idPartida, idJugadorActual, volverSalaEspera, 
         <div className="panel-eventos-juego">
           <div className="titulo-panel-juego">
             <Rocket size={15} />
-            <span>Eventos recientes</span>
+            <span>Bitacora de guerra</span>
             <div />
           </div>
-          <div className="lista-eventos-juego">
-            {(partida?.eventos || []).slice(-8).map((evento, indice) => (
-              <span key={`${evento}-${indice}`}>{evento}</span>
+          <div className="lista-eventos-juego" ref={referenciaBitacora}>
+            {eventosBitacora.map((evento, indice) => (
+              <span className="item-evento-juego" key={`${evento}-${indice}`}>
+                <strong>{String(indice + 1).padStart(2, '0')}</strong>
+                {evento}
+              </span>
             ))}
-            {(!partida?.eventos || partida.eventos.length === 0) && <span>Sin eventos registrados todavia.</span>}
+            {eventosBitacora.length === 0 && (
+              <span className="item-evento-juego evento-vacio">Sin transmisiones de combate por el momento.</span>
+            )}
           </div>
         </div>
       </div>
