@@ -2766,6 +2766,7 @@ button:focus {
     grid-row: auto;
   }
 }
+<<<<<<< HEAD
 
 .estado-socket {
   display: inline-flex;
@@ -2803,3 +2804,5 @@ button:focus {
   background: var(--cyan);
   box-shadow: 0 0 8px rgba(0, 229, 255, 0.72);
 }
+=======
+>>>>>>> ba1bebe215d71b3b8d51e51912d63b45c163bd42
