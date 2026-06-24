@@ -1,0 +1,38 @@
+{
+  "id": "Galaxia Test",
+  "nombre": "Galaxia Test",
+  "modoPrueba": true,
+  "sistemas": [
+    {
+      "id": "S1",
+      "nombre": "Base Alpha",
+      "tipo": "balanceado",
+      "descripcion": "Base inicial del primer jugador. Disenada para pruebas cortas de expansion."
+    },
+    {
+      "id": "S2",
+      "nombre": "Base Omega",
+      "tipo": "energetico",
+      "descripcion": "Base inicial del segundo jugador. Punto de defensa para partidas rapidas."
+    },
+    {
+      "id": "S3",
+      "nombre": "Puesto Minero",
+      "tipo": "minero",
+      "descripcion": "Sistema neutral cercano a Alpha. Es ideal para conquistar rapido y probar recursos."
+    },
+    {
+      "id": "S4",
+      "nombre": "Nucleo Cristal",
+      "tipo": "cientifico",
+      "descripcion": "Sistema neutral clave. Controlarlo junto con Alpha y el Puesto Minero activa la victoria por territorio."
+    }
+  ],
+  "rutas": [
+    ["S1", "S3"],
+    ["S3", "S4"],
+    ["S2", "S4"],
+    ["S1", "S2"],
+    ["S1", "S4"]
+  ]
+}

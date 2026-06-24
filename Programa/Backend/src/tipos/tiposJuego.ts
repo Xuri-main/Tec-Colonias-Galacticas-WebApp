@@ -21,6 +21,7 @@ export interface DatosSistemaJson {
 export interface DatosGalaxiaJson {
     id?: string;
     nombre: string;
+    modoPrueba?: boolean;
     sistemas: DatosSistemaJson[];
     rutas: string[][];
 }

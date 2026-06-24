@@ -98,12 +98,20 @@ export class RepositorioGalaxias {
             throw new Error('El archivo de galaxia tiene un formato invalido.');
         }
 
-        if (datos.sistemas.length < 25) {
+        if (!datos.modoPrueba && datos.sistemas.length < 25) {
             throw new Error('La galaxia debe tener al menos 25 sistemas planetarios.');
         }
 
-        if (datos.rutas.length < 40) {
+        if (!datos.modoPrueba && datos.rutas.length < 40) {
             throw new Error('La galaxia debe tener al menos 40 rutas espaciales.');
+        }
+
+        if (datos.modoPrueba && datos.sistemas.length < 2) {
+            throw new Error('La galaxia de prueba debe tener al menos 2 sistemas planetarios.');
+        }
+
+        if (datos.modoPrueba && datos.rutas.length < 1) {
+            throw new Error('La galaxia de prueba debe tener al menos 1 ruta espacial.');
         }
 
         const ids = new Set<string>();

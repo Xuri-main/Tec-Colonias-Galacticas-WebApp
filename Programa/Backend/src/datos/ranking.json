@@ -1,1 +1,19 @@
-[]
+[
+  {
+    "nombreGanador": "Xuri",
+    "sistemasControlados": 3,
+    "recursosAcumulados": {
+      "minerales": 0,
+      "energia": 250,
+      "cristales": 290
+    },
+    "galaxia": "Campo de Prueba Rapida",
+    "tiempoPartida": "4m 19s",
+    "tiempoPartidaSegundos": 259,
+    "identificadorPartida": "P1782250852499",
+    "idPartida": "P1782250852499",
+    "puntaje": 16370,
+    "razonFinalizacion": "Xuri controlo 3 de 4 sistemas planetarios.",
+    "fechaRegistro": "2026-06-23T21:45:29.553Z"
+  }
+]
