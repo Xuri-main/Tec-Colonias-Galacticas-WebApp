@@ -5,7 +5,7 @@
     Fecha: 21/06/2026
 */
 
-export type VistaAplicacion = 'menu' | 'crear-partida' | 'unirse-partida' | 'ranking';
+export type VistaAplicacion = 'menu' | 'crear-partida' | 'unirse-partida' | 'sala-espera' | 'ranking';
 
 export type NivelRecursosIniciales = 'bajo' | 'normal' | 'alto';
 
@@ -39,14 +39,31 @@ export interface GalaxiaResumen {
   cantidadRutas?: number;
 }
 
+export interface JugadorResumen {
+  id: string;
+  nickname: string;
+  recursos?: Recursos;
+  planetaBaseId?: string | null;
+  eliminado?: boolean;
+}
+
 export interface PartidaResumen {
   id: string;
   nombre: string;
-  galaxia?: string;
+  galaxia?: string | GalaxiaResumen;
   nombreGalaxia?: string;
   jugadoresActuales: number;
   maxJugadores: number;
   estado: string;
+}
+
+export interface PartidaDetalle extends PartidaResumen {
+  jugadores?: JugadorResumen[];
+  tiempoMaximoMinutos?: number;
+  fechaCreacion?: string;
+  fechaInicio?: string | null;
+  fechaFinalizacion?: string | null;
+  eventos?: string[];
 }
 
 export interface RankingItem {

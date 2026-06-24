@@ -12,6 +12,7 @@ import { BarraInferior } from './componentes/interfaz/BarraInferior';
 import { MenuPrincipal } from './paginas/MenuPrincipal';
 import { CrearPartida } from './paginas/CrearPartida';
 import { UnirsePartida } from './paginas/UnirsePartida';
+import { SalaEspera } from './paginas/SalaEspera';
 import { Ranking } from './paginas/Ranking';
 import { VistaAplicacion } from './tipos/tiposJuego';
 
@@ -19,13 +20,39 @@ import { VistaAplicacion } from './tipos/tiposJuego';
      App
     Entradas: No recibe entradas.
     Salidas: Retorna la interfaz principal de la aplicacion.
-    Objetivo: Mantener el nickname del jugador y decidir que vista se muestra.
+    Objetivo: Mantener el nickname, la vista actual y la partida activa del jugador.
 */
 export default function App() {
   const [nickname, setNickname] = useState('');
   const [vistaActual, setVistaActual] = useState<VistaAplicacion>('menu');
+  const [idPartidaActiva, setIdPartidaActiva] = useState('');
+  const [idJugadorActual, setIdJugadorActual] = useState('');
 
-  const volverAlMenu = () => setVistaActual('menu');
+  /*
+       volverAlMenu
+      Entradas: No recibe entradas.
+      Salidas: No retorna valor.
+      Objetivo: Regresar al menu principal sin borrar el nickname del jugador.
+  */
+  const volverAlMenu = () => {
+    setVistaActual('menu');
+  };
+
+  /*
+       abrirSalaEspera
+      Entradas: Id de partida y opcionalmente id de jugador.
+      Salidas: No retorna valor.
+      Objetivo: Guardar la partida activa y mostrar la sala de espera.
+  */
+  const abrirSalaEspera = (idPartida: string, idJugador?: string) => {
+    setIdPartidaActiva(idPartida);
+
+    if (idJugador) {
+      setIdJugadorActual(idJugador);
+    }
+
+    setVistaActual('sala-espera');
+  };
 
   return (
     <div className="aplicacion">
@@ -42,11 +69,29 @@ export default function App() {
           )}
 
           {vistaActual === 'crear-partida' && (
-            <CrearPartida nickname={nickname} volverAlMenu={volverAlMenu} />
+            <CrearPartida
+              nickname={nickname}
+              volverAlMenu={volverAlMenu}
+              abrirSalaEspera={abrirSalaEspera}
+            />
           )}
 
           {vistaActual === 'unirse-partida' && (
-            <UnirsePartida nickname={nickname} volverAlMenu={volverAlMenu} />
+            <UnirsePartida
+              nickname={nickname}
+              volverAlMenu={volverAlMenu}
+              abrirSalaEspera={abrirSalaEspera}
+            />
+          )}
+
+          {vistaActual === 'sala-espera' && (
+            <SalaEspera
+              nickname={nickname}
+              idPartida={idPartidaActiva}
+              idJugadorActual={idJugadorActual}
+              volverAlMenu={volverAlMenu}
+              guardarJugadorActual={setIdJugadorActual}
+            />
           )}
 
           {vistaActual === 'ranking' && (

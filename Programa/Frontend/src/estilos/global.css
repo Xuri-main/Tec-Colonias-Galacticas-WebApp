@@ -1263,3 +1263,703 @@ button:focus {
     flex-direction: column;
   }
 }
+
+.rejilla-confirmacion-creacion,
+.rejilla-unirse-partida {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.panel-confirmacion-partida,
+.panel-lista-partidas,
+.panel-ingreso-manual,
+.tarjeta-partida-disponible,
+.estado-vacio-partidas {
+  background: linear-gradient(135deg, rgba(13, 21, 48, 0.92) 0%, rgba(10, 15, 31, 0.96) 100%);
+  border: 1px solid var(--borde-cyan);
+  border-radius: 4px;
+  box-shadow: var(--sombra-cyan), inset 0 0 28px rgba(0, 229, 255, 0.02);
+  backdrop-filter: blur(10px);
+}
+
+.panel-confirmacion-partida {
+  min-height: 420px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+
+.panel-confirmacion-partida h3 {
+  margin: 0;
+  color: var(--texto-principal);
+  font-family: var(--fuente-titulo);
+  font-size: clamp(1.6rem, 3vw, 2.7rem);
+  line-height: 1.1;
+  text-transform: uppercase;
+  text-shadow: 0 0 28px rgba(0, 229, 255, 0.2);
+}
+
+.panel-confirmacion-partida p {
+  max-width: 620px;
+  margin: 0;
+  color: var(--texto-secundario);
+  line-height: 1.55;
+}
+
+.icono-confirmacion {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cyan);
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.32);
+  border-radius: 6px;
+  box-shadow: 0 0 26px rgba(0, 229, 255, 0.12);
+}
+
+.icono-confirmacion.magenta {
+  color: var(--magenta);
+  background: rgba(255, 45, 149, 0.08);
+  border-color: rgba(255, 45, 149, 0.32);
+  box-shadow: 0 0 26px rgba(255, 45, 149, 0.12);
+}
+
+.codigo-grande-partida {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: stretch;
+  margin: 8px 0;
+}
+
+.codigo-grande-partida code {
+  padding: 16px;
+  color: var(--ambar);
+  background: rgba(255, 200, 87, 0.08);
+  border: 1px solid rgba(255, 200, 87, 0.24);
+  border-radius: 4px;
+  font-family: var(--fuente-mono);
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+  overflow-x: auto;
+}
+
+.codigo-grande-partida button,
+.encabezado-lista-partidas button,
+.tarjeta-partida-disponible button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--texto-principal);
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.24);
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-family: var(--fuente-titulo);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.codigo-grande-partida button {
+  padding: 0 16px;
+}
+
+.codigo-grande-partida button:hover,
+.encabezado-lista-partidas button:hover:not(:disabled),
+.tarjeta-partida-disponible button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.14);
+}
+
+.codigo-grande-partida button:disabled,
+.encabezado-lista-partidas button:disabled,
+.tarjeta-partida-disponible button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.panel-lista-partidas,
+.panel-ingreso-manual {
+  padding: 18px;
+}
+
+.encabezado-lista-partidas {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.encabezado-lista-partidas div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--cyan);
+  font-family: var(--fuente-titulo);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.encabezado-lista-partidas button {
+  padding: 9px 12px;
+}
+
+.lista-partidas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 560px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.tarjeta-partida-disponible {
+  padding: 16px;
+  border-color: rgba(0, 229, 255, 0.16);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.tarjeta-partida-disponible:hover:not(.bloqueada) {
+  transform: translateY(-2px);
+  border-color: rgba(0, 229, 255, 0.38);
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.12);
+}
+
+.tarjeta-partida-disponible.bloqueada {
+  opacity: 0.58;
+}
+
+.superior-tarjeta-partida {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.superior-tarjeta-partida h3 {
+  margin: 4px 0 0;
+  color: var(--texto-principal);
+  font-family: var(--fuente-titulo);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.codigo-pequeno-partida {
+  color: var(--ambar);
+  font-family: var(--fuente-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
+.estado-partida {
+  padding: 5px 8px;
+  color: var(--texto-apagado);
+  background: rgba(159, 179, 200, 0.06);
+  border: 1px solid rgba(159, 179, 200, 0.12);
+  border-radius: 999px;
+  font-family: var(--fuente-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.estado-partida.disponible {
+  color: var(--cyan);
+  background: rgba(0, 229, 255, 0.07);
+  border-color: rgba(0, 229, 255, 0.22);
+}
+
+.datos-tarjeta-partida {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.datos-tarjeta-partida div {
+  padding: 10px;
+  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid rgba(0, 229, 255, 0.08);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.datos-tarjeta-partida span,
+.lista-jugadores-unidos span {
+  color: var(--texto-secundario);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.datos-tarjeta-partida strong,
+.lista-jugadores-unidos strong {
+  color: var(--texto-principal);
+  font-family: var(--fuente-mono);
+  font-size: 0.82rem;
+}
+
+.tarjeta-partida-disponible button {
+  width: 100%;
+  min-height: 40px;
+}
+
+.estado-vacio-partidas {
+  min-height: 220px;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  color: var(--texto-secundario);
+}
+
+.estado-vacio-partidas svg {
+  color: var(--cyan);
+}
+
+.estado-vacio-partidas strong {
+  color: var(--texto-principal);
+  font-family: var(--fuente-titulo);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.panel-ingreso-manual {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel-ingreso-manual form {
+  display: flex;
+  flex-direction: column;
+}
+
+.lista-jugadores-unidos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lista-jugadores-unidos div {
+  padding: 10px;
+  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid rgba(0, 229, 255, 0.08);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+@media (max-width: 920px) {
+  .rejilla-confirmacion-creacion,
+  .rejilla-unirse-partida {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .codigo-grande-partida,
+  .datos-tarjeta-partida {
+    grid-template-columns: 1fr;
+  }
+
+  .codigo-grande-partida button {
+    min-height: 44px;
+  }
+
+  .encabezado-lista-partidas {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+.boton-entrada-sala {
+  margin-top: 8px;
+  max-width: 280px;
+}
+
+.vista-sala-espera {
+  max-width: 1180px;
+}
+
+.rejilla-sala-espera {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.75fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.panel-principal-sala,
+.panel-lateral-sala,
+.codigo-sala-espera,
+.jugador-sala,
+.cupos-pendientes-sala,
+.tarjeta-accion-sala {
+  background: linear-gradient(135deg, rgba(13, 21, 48, 0.92) 0%, rgba(10, 15, 31, 0.96) 100%);
+  border: 1px solid var(--borde-cyan);
+  border-radius: 4px;
+  box-shadow: var(--sombra-cyan), inset 0 0 28px rgba(0, 229, 255, 0.02);
+  backdrop-filter: blur(10px);
+}
+
+.panel-principal-sala,
+.panel-lateral-sala {
+  padding: 18px;
+}
+
+.encabezado-sala {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.encabezado-sala div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--cyan);
+  font-family: var(--fuente-titulo);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.encabezado-sala button,
+.codigo-sala-espera button,
+.tarjeta-accion-sala button,
+.boton-iniciar-sala {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--texto-principal);
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.24);
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  font-family: var(--fuente-titulo);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.encabezado-sala button,
+.codigo-sala-espera button,
+.tarjeta-accion-sala button {
+  min-height: 38px;
+  padding: 0 13px;
+}
+
+.encabezado-sala button:hover:not(:disabled),
+.codigo-sala-espera button:hover:not(:disabled),
+.tarjeta-accion-sala button:hover:not(:disabled),
+.boton-iniciar-sala:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(0, 229, 255, 0.45);
+  box-shadow: 0 0 18px rgba(0, 229, 255, 0.14);
+}
+
+.encabezado-sala button:disabled,
+.codigo-sala-espera button:disabled,
+.tarjeta-accion-sala button:disabled,
+.boton-iniciar-sala:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.codigo-sala-espera {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+  border-color: rgba(255, 200, 87, 0.2);
+  margin-bottom: 16px;
+}
+
+.codigo-sala-espera span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--texto-secundario);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.codigo-sala-espera code {
+  color: var(--ambar);
+  font-family: var(--fuente-mono);
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  word-break: break-word;
+}
+
+.barra-progreso-sala {
+  padding: 15px;
+  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid rgba(0, 229, 255, 0.08);
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.texto-progreso-sala {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.texto-progreso-sala span {
+  color: var(--texto-secundario);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.texto-progreso-sala strong {
+  color: var(--cyan);
+  font-family: var(--fuente-mono);
+  font-size: 0.82rem;
+}
+
+.base-progreso-sala {
+  height: 8px;
+  overflow: hidden;
+  background: rgba(10, 15, 31, 0.9);
+  border: 1px solid rgba(0, 229, 255, 0.14);
+  border-radius: 999px;
+}
+
+.base-progreso-sala div {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--magenta));
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.3);
+  transition: width 0.35s ease;
+}
+
+.lista-jugadores-sala {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.titulo-lista-jugadores-sala {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--cyan);
+  font-family: var(--fuente-titulo);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin: 6px 0;
+}
+
+.titulo-lista-jugadores-sala div {
+  flex: 1;
+  height: 1px;
+  background: rgba(0, 229, 255, 0.15);
+}
+
+.jugador-sala {
+  padding: 13px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  border-color: rgba(0, 229, 255, 0.12);
+}
+
+.jugador-sala.actual {
+  border-color: rgba(255, 200, 87, 0.32);
+  box-shadow: 0 0 24px rgba(255, 200, 87, 0.08), inset 0 0 20px rgba(255, 200, 87, 0.02);
+}
+
+.insignia-jugador-sala {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cyan);
+  background: rgba(0, 229, 255, 0.07);
+  border: 1px solid rgba(0, 229, 255, 0.2);
+  border-radius: 4px;
+}
+
+.jugador-sala.actual .insignia-jugador-sala {
+  color: var(--ambar);
+  background: rgba(255, 200, 87, 0.08);
+  border-color: rgba(255, 200, 87, 0.24);
+}
+
+.jugador-sala strong {
+  display: block;
+  color: var(--texto-principal);
+  font-family: var(--fuente-titulo);
+  font-size: 0.86rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.jugador-sala span {
+  display: block;
+  margin-top: 3px;
+  color: var(--texto-secundario);
+  font-family: var(--fuente-mono);
+  font-size: 0.72rem;
+}
+
+.jugador-sala em {
+  color: var(--ambar);
+  font-family: var(--fuente-mono);
+  font-size: 0.68rem;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.cupos-pendientes-sala {
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--texto-secundario);
+  border-color: rgba(255, 200, 87, 0.14);
+}
+
+.cupos-pendientes-sala svg {
+  color: var(--ambar);
+  flex-shrink: 0;
+}
+
+.panel-lateral-sala {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tarjeta-accion-sala {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  border-color: rgba(0, 229, 255, 0.14);
+}
+
+.tarjeta-accion-sala svg {
+  color: var(--cyan);
+}
+
+.tarjeta-accion-sala strong {
+  color: var(--texto-principal);
+  font-family: var(--fuente-titulo);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.tarjeta-accion-sala p,
+.nota-inicio-sala,
+.eventos-sala span {
+  margin: 0;
+  color: var(--texto-secundario);
+  line-height: 1.5;
+  font-size: 0.86rem;
+}
+
+.tarjeta-accion-sala.advertencia {
+  border-color: rgba(255, 45, 149, 0.22);
+}
+
+.tarjeta-accion-sala.advertencia svg {
+  color: var(--magenta);
+}
+
+.tarjeta-accion-sala.exito {
+  border-color: rgba(255, 200, 87, 0.22);
+}
+
+.tarjeta-accion-sala.exito svg {
+  color: var(--ambar);
+}
+
+.boton-iniciar-sala {
+  width: 100%;
+  min-height: 50px;
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.16) 0%, rgba(255, 45, 149, 0.12) 100%);
+}
+
+.boton-iniciar-sala:not(:disabled) {
+  border-color: rgba(0, 229, 255, 0.45);
+  box-shadow: 0 0 26px rgba(0, 229, 255, 0.12);
+}
+
+.nota-inicio-sala {
+  text-align: center;
+  font-size: 0.78rem;
+}
+
+.eventos-sala {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eventos-sala span {
+  padding: 9px 10px;
+  background: rgba(0, 229, 255, 0.04);
+  border: 1px solid rgba(0, 229, 255, 0.08);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 960px) {
+  .rejilla-sala-espera {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .encabezado-sala,
+  .codigo-sala-espera {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .jugador-sala {
+    grid-template-columns: auto 1fr;
+  }
+
+  .jugador-sala em {
+    grid-column: 2;
+  }
+}

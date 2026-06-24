@@ -5,7 +5,7 @@
     Fecha: 21/06/2026
 */
 
-import { NivelRecursosIniciales, PartidaResumen, RespuestaApi } from '../tipos/tiposJuego';
+import { NivelRecursosIniciales, PartidaDetalle, PartidaResumen, RespuestaApi } from '../tipos/tiposJuego';
 import { solicitar } from './clienteApi';
 
 export interface DatosCrearPartida {
@@ -33,13 +33,24 @@ export async function obtenerPartidas(): Promise<PartidaResumen[]> {
     Salidas: Partida creada por el backend.
     Objetivo: Enviar al servidor la configuracion de una nueva partida.
 */
-export async function crearPartida(datos: DatosCrearPartida): Promise<PartidaResumen> {
-  const respuesta = await solicitar<RespuestaApi<PartidaResumen>>('/partidas', {
+export async function crearPartida(datos: DatosCrearPartida): Promise<PartidaDetalle> {
+  const respuesta = await solicitar<RespuestaApi<PartidaDetalle>>('/partidas', {
     method: 'POST',
     body: JSON.stringify(datos)
   });
 
-  return respuesta.partida as PartidaResumen;
+  return respuesta.partida as PartidaDetalle;
+}
+
+/*
+     obtenerPartidaPorId
+    Entradas: Identificador de la partida.
+    Salidas: Estado publico completo de la partida.
+    Objetivo: Consultar una partida concreta para mostrar sus datos actuales.
+*/
+export async function obtenerPartidaPorId(idPartida: string): Promise<PartidaDetalle> {
+  const respuesta = await solicitar<RespuestaApi<PartidaDetalle>>(`/partidas/${idPartida}`);
+  return respuesta.partida as PartidaDetalle;
 }
 
 /*
@@ -48,13 +59,13 @@ export async function crearPartida(datos: DatosCrearPartida): Promise<PartidaRes
     Salidas: Partida actualizada.
     Objetivo: Incorporar un jugador a una partida existente.
 */
-export async function unirsePartida(idPartida: string, nickname: string): Promise<PartidaResumen> {
-  const respuesta = await solicitar<RespuestaApi<PartidaResumen>>(`/partidas/${idPartida}/unirse`, {
+export async function unirsePartida(idPartida: string, nickname: string): Promise<PartidaDetalle> {
+  const respuesta = await solicitar<RespuestaApi<PartidaDetalle>>(`/partidas/${idPartida}/unirse`, {
     method: 'POST',
     body: JSON.stringify({ nickname })
   });
 
-  return respuesta.partida as PartidaResumen;
+  return respuesta.partida as PartidaDetalle;
 }
 
 /*
@@ -63,10 +74,10 @@ export async function unirsePartida(idPartida: string, nickname: string): Promis
     Salidas: Partida iniciada.
     Objetivo: Solicitar al backend el inicio de una partida llena o valida.
 */
-export async function iniciarPartida(idPartida: string): Promise<PartidaResumen> {
-  const respuesta = await solicitar<RespuestaApi<PartidaResumen>>(`/partidas/${idPartida}/iniciar`, {
+export async function iniciarPartida(idPartida: string): Promise<PartidaDetalle> {
+  const respuesta = await solicitar<RespuestaApi<PartidaDetalle>>(`/partidas/${idPartida}/iniciar`, {
     method: 'POST'
   });
 
-  return respuesta.partida as PartidaResumen;
+  return respuesta.partida as PartidaDetalle;
 }

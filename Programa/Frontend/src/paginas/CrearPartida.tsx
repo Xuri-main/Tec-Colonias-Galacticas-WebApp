@@ -6,14 +6,15 @@
 */
 
 import { FormEvent, useEffect, useState } from 'react';
-import { ArrowLeft, CheckCircle, Clock, Copy, Rocket, Satellite, Shield, Users, Zap } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Copy, Lock, Rocket, Satellite, Shield, Users, Zap } from 'lucide-react';
 import { obtenerGalaxias } from '../servicios/servicioGalaxias';
-import { crearPartida } from '../servicios/servicioPartidas';
-import { GalaxiaResumen, NivelRecursosIniciales, PartidaResumen } from '../tipos/tiposJuego';
+import { crearPartida, unirsePartida } from '../servicios/servicioPartidas';
+import { GalaxiaResumen, NivelRecursosIniciales, PartidaDetalle } from '../tipos/tiposJuego';
 
 interface PropiedadesCrearPartida {
   nickname: string;
   volverAlMenu: () => void;
+  abrirSalaEspera: (idPartida: string, idJugador?: string) => void;
 }
 
 interface RecursosInicialesVista {
@@ -29,12 +30,30 @@ const recursosIniciales: Record<NivelRecursosIniciales, RecursosInicialesVista> 
 };
 
 /*
+     obtenerNombreGalaxia
+    Entradas: Partida creada y galaxia seleccionada.
+    Salidas: Nombre de la galaxia.
+    Objetivo: Mostrar el nombre correcto de galaxia aunque el backend envie resumen o detalle.
+*/
+function obtenerNombreGalaxia(partida: PartidaDetalle | null, galaxiaSeleccionada?: GalaxiaResumen): string {
+  if (!partida) {
+    return galaxiaSeleccionada?.nombre || 'Sin seleccionar';
+  }
+
+  if (typeof partida.galaxia === 'string') {
+    return partida.galaxia;
+  }
+
+  return partida.galaxia?.nombre || galaxiaSeleccionada?.nombre || 'Sin seleccionar';
+}
+
+/*
      CrearPartida
     Entradas: Nickname del jugador y funcion para volver al menu.
-    Salidas: Retorna el formulario de creacion de partidas.
-    Objetivo: Permitir configurar nombre, galaxia, jugadores, tiempo y recursos iniciales.
+    Salidas: Retorna el formulario o la confirmacion de partida creada.
+    Objetivo: Permitir configurar una partida y evitar creaciones repetidas desde la misma vista.
 */
-export function CrearPartida({ nickname, volverAlMenu }: PropiedadesCrearPartida) {
+export function CrearPartida({ nickname, volverAlMenu, abrirSalaEspera }: PropiedadesCrearPartida) {
   const [galaxias, setGalaxias] = useState<GalaxiaResumen[]>([]);
   const [nombre, setNombre] = useState('');
   const [idGalaxia, setIdGalaxia] = useState('');
@@ -43,8 +62,9 @@ export function CrearPartida({ nickname, volverAlMenu }: PropiedadesCrearPartida
   const [nivelRecursosIniciales, setNivelRecursosIniciales] = useState<NivelRecursosIniciales>('normal');
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState('');
-  const [partidaCreada, setPartidaCreada] = useState<PartidaResumen | null>(null);
+  const [partidaCreada, setPartidaCreada] = useState<PartidaDetalle | null>(null);
   const [idCopiado, setIdCopiado] = useState(false);
+  const [entrandoSala, setEntrandoSala] = useState(false);
 
   useEffect(() => {
     const cargarGalaxias = async () => {
@@ -67,9 +87,13 @@ export function CrearPartida({ nickname, volverAlMenu }: PropiedadesCrearPartida
        validarFormulario
       Entradas: No recibe entradas.
       Salidas: Mensaje de error o texto vacio.
-      Objetivo: Evitar enviar datos incompletos o invalidos al backend.
+      Objetivo: Evitar enviar datos incompletos, invalidos o repetidos al backend.
   */
   const validarFormulario = (): string => {
+    if (partidaCreada) {
+      return 'Ya se creo una partida desde esta pantalla. Copie el codigo o vuelva al menu.';
+    }
+
     if (!nickname.trim()) {
       return 'Debe ingresar un nickname desde el menu principal.';
     }
@@ -97,7 +121,7 @@ export function CrearPartida({ nickname, volverAlMenu }: PropiedadesCrearPartida
        manejarCreacion
       Entradas: Evento del formulario.
       Salidas: No retorna valor.
-      Objetivo: Crear la partida llamando al servicio HTTP correspondiente.
+      Objetivo: Crear la partida llamando al servicio HTTP correspondiente una sola vez.
   */
   const manejarCreacion = async (evento: FormEvent<HTMLFormElement>) => {
     evento.preventDefault();
@@ -111,7 +135,6 @@ export function CrearPartida({ nickname, volverAlMenu }: PropiedadesCrearPartida
     try {
       setCargando(true);
       setMensaje('Creando partida...');
-      setPartidaCreada(null);
 
       const partida = await crearPartida({
         nombre: nombre.trim(),
@@ -122,7 +145,7 @@ export function CrearPartida({ nickname, volverAlMenu }: PropiedadesCrearPartida
       });
 
       setPartidaCreada(partida);
-      setMensaje('Partida creada correctamente. Comparta el identificador con los demas jugadores.');
+      setMensaje('Partida creada correctamente. El formulario fue bloqueado para evitar duplicados.');
     } catch (error: any) {
       setMensaje(error.message || 'No se pudo crear la partida.');
     } finally {
@@ -148,8 +171,132 @@ export function CrearPartida({ nickname, volverAlMenu }: PropiedadesCrearPartida
     }
   };
 
+  /*
+       manejarEntradaSala
+      Entradas: No recibe entradas.
+      Salidas: No retorna valor.
+      Objetivo: Registrar al creador como jugador y abrir la sala de espera.
+  */
+  const manejarEntradaSala = async () => {
+    if (!partidaCreada) {
+      return;
+    }
+
+    try {
+      setEntrandoSala(true);
+      setMensaje('Registrando al creador en la sala de espera...');
+      const partidaActualizada = await unirsePartida(partidaCreada.id, nickname.trim());
+      const jugador = (partidaActualizada.jugadores || []).find(
+        (dato) => dato.nickname.trim().toLowerCase() === nickname.trim().toLowerCase()
+      );
+
+      abrirSalaEspera(partidaActualizada.id, jugador?.id);
+    } catch (error: any) {
+      if (String(error.message || '').toLowerCase().includes('nickname')) {
+        abrirSalaEspera(partidaCreada.id);
+        return;
+      }
+
+      setMensaje(error.message || 'No se pudo entrar a la sala de espera.');
+    } finally {
+      setEntrandoSala(false);
+    }
+  };
+
   const recursosSeleccionados = recursosIniciales[nivelRecursosIniciales];
   const galaxiaSeleccionada = galaxias.find((galaxia) => galaxia.id === idGalaxia);
+  const nombreGalaxia = obtenerNombreGalaxia(partidaCreada, galaxiaSeleccionada);
+
+  if (partidaCreada) {
+    return (
+      <section className="vista-formulario animacion-entrada">
+        <div className="cabecera-vista">
+          <button className="boton-volver" onClick={volverAlMenu} type="button">
+            <ArrowLeft size={16} />
+            Volver al menu
+          </button>
+          <span className="etiqueta-vista">Partida registrada</span>
+          <h2>Codigo de acceso generado</h2>
+          <p>
+            Comandante <strong>{nickname}</strong>, la sala fue creada correctamente. Comparta el identificador
+            con sus compañeros para que puedan ingresar desde la vista de unirse a partida.
+          </p>
+        </div>
+
+        <div className="rejilla-confirmacion-creacion">
+          <div className="panel-confirmacion-partida">
+            <div className="icono-confirmacion">
+              <CheckCircle size={34} />
+            </div>
+            <span className="etiqueta-vista">Sala en espera</span>
+            <h3>{partidaCreada.nombre}</h3>
+            <div className="codigo-grande-partida">
+              <code>{partidaCreada.id}</code>
+              <button type="button" onClick={copiarIdPartida}>
+                <Copy size={15} />
+                {idCopiado ? 'Copiado' : 'Copiar codigo'}
+              </button>
+            </div>
+            <p>
+              Este codigo identifica la partida en el servidor. Tambien se puede compartir con los demas jugadores
+              para que entren desde la vista de unirse a partida.
+            </p>
+            <button className="boton-principal boton-entrada-sala" type="button" onClick={manejarEntradaSala} disabled={entrandoSala}>
+              <Users size={16} />
+              {entrandoSala ? 'Entrando a sala...' : 'Entrar a sala de espera'}
+            </button>
+          </div>
+
+          <aside className="panel-resumen-creacion">
+            <div className="tarjeta-resumen-creacion">
+              <div className="titulo-resumen-creacion">
+                <Satellite size={15} />
+                <span>Resumen tactico</span>
+                <div />
+              </div>
+              <div className="linea-resumen">
+                <span>Galaxia</span>
+                <strong>{nombreGalaxia}</strong>
+              </div>
+              <div className="linea-resumen">
+                <span>Jugadores</span>
+                <strong>{partidaCreada.jugadoresActuales}/{partidaCreada.maxJugadores}</strong>
+              </div>
+              <div className="linea-resumen">
+                <span>Estado</span>
+                <strong>{partidaCreada.estado}</strong>
+              </div>
+              <div className="linea-resumen">
+                <span>Duracion</span>
+                <strong>{tiempoMaximoMinutos} min</strong>
+              </div>
+            </div>
+
+            <div className="tarjeta-resumen-creacion">
+              <div className="titulo-resumen-creacion">
+                <Shield size={15} />
+                <span>Recursos iniciales</span>
+                <div />
+              </div>
+              <div className="recursos-resumen">
+                <div><span>Minerales</span><strong>{recursosSeleccionados.minerales}</strong></div>
+                <div><span>Energia</span><strong>{recursosSeleccionados.energia}</strong></div>
+                <div><span>Cristales</span><strong>{recursosSeleccionados.cristales}</strong></div>
+              </div>
+            </div>
+
+            <div className="aviso-creacion">
+              <Lock size={15} />
+              <p>
+                El formulario queda oculto para evitar que el usuario envie la misma configuracion muchas veces
+                por accidente. Para crear otra sala debe volver al menu y entrar nuevamente.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="vista-formulario animacion-entrada">
@@ -239,7 +386,7 @@ export function CrearPartida({ nickname, volverAlMenu }: PropiedadesCrearPartida
             </div>
           </div>
 
-          {mensaje && <div className={partidaCreada ? 'mensaje-formulario exito' : 'mensaje-formulario'}>{mensaje}</div>}
+          {mensaje && <div className="mensaje-formulario">{mensaje}</div>}
 
           <button className="boton-principal" type="submit" disabled={cargando}>
             <Zap size={16} />
@@ -252,10 +399,11 @@ export function CrearPartida({ nickname, volverAlMenu }: PropiedadesCrearPartida
             <div className="titulo-resumen-creacion">
               <Satellite size={15} />
               <span>Resumen tactico</span>
+              <div />
             </div>
             <div className="linea-resumen">
               <span>Galaxia</span>
-              <strong>{galaxiaSeleccionada?.nombre || 'Sin seleccionar'}</strong>
+              <strong>{nombreGalaxia}</strong>
             </div>
             <div className="linea-resumen">
               <span>Sistemas</span>
@@ -279,6 +427,7 @@ export function CrearPartida({ nickname, volverAlMenu }: PropiedadesCrearPartida
             <div className="titulo-resumen-creacion">
               <Shield size={15} />
               <span>Recursos iniciales</span>
+              <div />
             </div>
             <div className="recursos-resumen">
               <div><span>Minerales</span><strong>{recursosSeleccionados.minerales}</strong></div>
@@ -286,22 +435,6 @@ export function CrearPartida({ nickname, volverAlMenu }: PropiedadesCrearPartida
               <div><span>Cristales</span><strong>{recursosSeleccionados.cristales}</strong></div>
             </div>
           </div>
-
-          {partidaCreada && (
-            <div className="tarjeta-partida-creada">
-              <CheckCircle size={18} />
-              <span>Partida creada</span>
-              <strong>{partidaCreada.nombre}</strong>
-              <div className="codigo-partida-creada">
-                <code>{partidaCreada.id}</code>
-                <button type="button" onClick={copiarIdPartida}>
-                  <Copy size={13} />
-                  {idCopiado ? 'Copiado' : 'Copiar'}
-                </button>
-              </div>
-              <small>Estado: {partidaCreada.estado} / Jugadores: {partidaCreada.jugadoresActuales}/{partidaCreada.maxJugadores}</small>
-            </div>
-          )}
 
           <div className="aviso-creacion">
             <Clock size={15} />
