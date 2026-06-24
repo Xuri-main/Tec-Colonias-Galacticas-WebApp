@@ -1,0 +1,23 @@
+2026-06-24 | aaaf4e2 | Solucion de error en log de juego.tsx
+2026-06-24 | 81eec6b | Levantamiento de Public HTTP
+2026-06-24 | 45f4004 | Añadido del info.txt
+2026-06-24 | 8d518f1 | Agregar dependencias de desarrollo
+2026-06-24 | 2fcf8ab | Diseño de interfaz, vistas del juego y componentes principales del frontend
+2026-06-24 | c85223d | Merge branch 'main' of https://github.com/Xuri-main/Tec-Colonias-Galacticas-WebApp
+2026-06-23 | d871623 | agregar vista tactica y sincronizacion en tiempo real"
+2026-06-23 | ba1bebe | Actualizacion de frontend
+2026-06-23 | 33f6b60 | Implementar páginas principales, componentes UI y servicios del juego
+2026-06-23 | 5e04f36 | actualizacion pag principal
+2026-06-23 | 1ff8b30 | actualizacion de vista crearPartida
+2026-06-22 | 374eb8f | Inicializacion de la pagina principal
+2026-06-21 | 0a6d292 | Solucion de error req.params.id
+2026-06-21 | 0423658 | Nombre de package
+2026-06-21 | d1ee3c4 | Levantamiento del backend, aplicacion y servidor. Datos de galaxia y ranking iniciales
+2026-06-21 | 6301464 | Socket, servicios, repositorio y ajustes de configuracion
+2026-06-21 | 8fec257 | docu interna de clases
+2026-06-21 | c61163f | .gitignore + package.json
+2026-06-21 | 95970df | actualizacion de clases
+2026-06-21 | 22d8d74 | Parametros generales de configuración del juego
+2026-06-18 | 4907eac | Clases abstractas galaxia, jugador, sistema, ruta
+2026-06-15 | dd2ab97 | Inicializacion de backend y frontend
+2026-06-15 | deddf3b | Initial commit
